@@ -479,7 +479,30 @@ impl Game<'_> {
             known_recipes,
             placing: self.mod_recipe_screen(),
             creative: self.creative,
+            entities: self.mod_entities(),
         }
+    }
+    /// The entities the game tracks (`entities.list` and `entities.get`):
+    /// every mob and player in view, as of this tick. Collected only while a
+    /// mod reads them; empty on the title screen.
+    fn mod_entities(&self) -> Arc<[horizon_mods::ModEntity]> {
+        if !self.mods.mods.wants_entities() {
+            return Arc::from([]);
+        }
+        self.mobs
+            .iter()
+            .filter(|m| !m.removed)
+            .map(|m| horizon_mods::ModEntity {
+                id: m.id,
+                kind: m.kind.id.clone(),
+                x: m.position.x,
+                y: m.position.y,
+                z: m.position.z,
+                yaw: m.yaw,
+                health: (m.kind.max_health > 0.0).then_some(m.health),
+                custom_name: m.custom_name.clone(),
+            })
+            .collect()
     }
     /// The first block along the player's view within
     /// [`horizon_mods::RAYCAST_MAX`] and its distance from the eye

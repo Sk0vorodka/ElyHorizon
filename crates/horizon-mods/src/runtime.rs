@@ -101,6 +101,17 @@ pub use recipes_bindings::horizon::mods::recipes::{
     Item as RecipeItem, Kind as RecipeKind, Recipe, Stack as RecipeStack,
 };
 use recipes_bindings::{RecipesHost, horizon::mods::browser, horizon::mods::recipes};
+/// Capability `entities`'s imports (docs/mods.md): the entities around the
+/// player.
+mod entities_bindings {
+    wasmtime::component::bindgen!({
+        path: "../horizon-mod-sdk/wit",
+        world: "entities-host",
+    });
+}
+/// The entities the game tracks (WIT `interface entities`).
+pub use entities_bindings::horizon::mods::entities::Entity as ModEntity;
+use entities_bindings::{EntitiesHost, horizon::mods::entities};
 
 /// A mod's linear memory cap.
 const MEMORY: usize = 64 << 20;
@@ -119,6 +130,10 @@ const CHAT_PER_CALL: usize = 8;
 const QUIET_PER_CALL: usize = 256;
 /// How far `game.raycast` sees, in blocks.
 pub const RAYCAST_MAX: f32 = 1024.0;
+/// How far `entities.list` reaches, in blocks.
+pub const ENTITIES_RADIUS_MAX: f32 = 1024.0;
+/// The entities `entities.list` may answer with, nearest first.
+pub const ENTITIES_KEPT: usize = 256;
 const HUD_LINES: usize = 16;
 const LINE_CHARS: usize = 256;
 /// Total bytes a mod's `storage` may hold on disk, across all its keys.
@@ -167,6 +182,10 @@ pub struct Snapshot {
     pub placing: bool,
     /// The player is in creative mode (`recipes.give`).
     pub creative: bool,
+    /// The entities the game tracks, in no order, for capability `entities`;
+    /// the game collects them only while a mod reads them
+    /// ([`Mods::wants_entities`]). Empty on the title screen.
+    pub entities: Arc<[ModEntity]>,
 }
 
 /// Capability `recipes`'s tables: `items` in the registry's order, which
@@ -316,6 +335,8 @@ struct Running {
     hooks: Hooks,
     /// It imports `game.raycast`.
     raycasts: bool,
+    /// It imports capability `entities`.
+    entities: bool,
     /// It imports capability `recipes`.
     reads_recipes: bool,
 }
@@ -548,6 +569,8 @@ impl Mods {
                 .map_err(|e| e.to_string())?;
             RecipesHost::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
                 .map_err(|e| e.to_string())?;
+            EntitiesHost::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
+                .map_err(|e| e.to_string())?;
             self.engine = Some((engine, linker));
         }
         Ok(self.engine.as_ref().expect("made above"))
@@ -683,6 +706,7 @@ impl Mods {
             ui,
             hooks,
             raycasts: functions.iter().any(|f| f == "game.raycast"),
+            entities: functions.iter().any(|f| f.starts_with("entities.")),
             reads_recipes: functions.iter().any(|f| f.starts_with("recipes.")),
         }))
     }
@@ -965,6 +989,13 @@ impl Mods {
         self.entries
             .iter()
             .any(|e| e.run.as_ref().is_some_and(|r| r.raycasts))
+    }
+    /// Some running mod reads capability `entities`: the snapshot needs
+    /// [`Snapshot::entities`].
+    pub fn wants_entities(&self) -> bool {
+        self.entries
+            .iter()
+            .any(|e| e.run.as_ref().is_some_and(|r| r.entities))
     }
     /// The panel beside container screens (`browser.set-items`): the first
     /// running mod with items or recipes, its index, the panel's version and
@@ -1410,6 +1441,29 @@ impl game::Host for State {
         let (at, hit) = self.snapshot.view_hit.as_ref()?;
         // NaN compares false: no hit.
         (*at <= distance.min(RAYCAST_MAX) && !distance.is_nan()).then(|| hit.clone())
+    }
+}
+impl entities::Host for State {
+    fn list(&mut self, radius: f32) -> Option<Vec<ModEntity>> {
+        let player = self.snapshot.player.as_ref()?;
+        let radius = f64::from(radius.clamp(0.0, ENTITIES_RADIUS_MAX));
+        let mut picked: Vec<(f64, ModEntity)> = self
+            .snapshot
+            .entities
+            .iter()
+            .map(|e| {
+                let (dx, dy, dz) = (e.x - player.x, e.y - player.y, e.z - player.z);
+                ((dx * dx + dy * dy + dz * dz).sqrt(), e.clone())
+            })
+            // NaN compares false: an entity at an unset position stays out.
+            .filter(|(d, _)| *d <= radius)
+            .collect();
+        picked.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap_or(std::cmp::Ordering::Greater));
+        picked.truncate(ENTITIES_KEPT);
+        Some(picked.into_iter().map(|(_, e)| e).collect())
+    }
+    fn get(&mut self, id: u32) -> Option<ModEntity> {
+        self.snapshot.entities.iter().find(|e| e.id == id).cloned()
     }
 }
 impl browser::Host for State {

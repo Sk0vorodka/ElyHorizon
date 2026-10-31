@@ -95,6 +95,9 @@ pub enum Capability {
     /// The use button on items the mod claims, and its own keys
     /// (interface `input`).
     Input,
+    /// The entities around the player, as the game tracks them
+    /// (interface `entities`).
+    Entities,
     /// The players on the server and messages to them (server mods).
     Players,
     /// Blocks in the server's loaded chunks, and changes to them (server
@@ -105,7 +108,7 @@ pub enum Capability {
     Recipes,
 }
 impl Capability {
-    pub const ALL: [Capability; 12] = [
+    pub const ALL: [Capability; 13] = [
         Capability::GameRead,
         Capability::Chat,
         Capability::Hud,
@@ -115,6 +118,7 @@ impl Capability {
         Capability::Ui,
         Capability::Render,
         Capability::Input,
+        Capability::Entities,
         Capability::Players,
         Capability::World,
         Capability::Recipes,
@@ -138,6 +142,7 @@ impl Capability {
             Capability::Ui => "ui",
             Capability::Render => "render",
             Capability::Input => "input",
+            Capability::Entities => "entities",
             Capability::Players => "players",
             Capability::World => "world",
             Capability::Recipes => "recipes",
@@ -148,7 +153,11 @@ impl Capability {
     pub fn is_experimental(self) -> bool {
         matches!(
             self,
-            Capability::Ui | Capability::Render | Capability::Input | Capability::Recipes
+            Capability::Ui
+                | Capability::Render
+                | Capability::Input
+                | Capability::Entities
+                | Capability::Recipes
         )
     }
     /// What the player reads before turning the mod on: "May <this>".
@@ -165,6 +174,7 @@ impl Capability {
             Capability::Input => {
                 "see the keys you hold and your clicks, take over the use button on its own items and the mouse wheel, and add keys"
             }
+            Capability::Entities => "see the entities around you",
             Capability::Players => "see who is on the server and message them",
             Capability::World => "read and change the world's blocks",
             Capability::Recipes => {
@@ -208,6 +218,7 @@ impl fmt::Display for Capability {
             Capability::Ui => "ui",
             Capability::Render => "render",
             Capability::Input => "input",
+            Capability::Entities => "entities",
             Capability::Players => "players",
             Capability::World => "world",
             Capability::Recipes => "recipes",

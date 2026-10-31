@@ -275,6 +275,37 @@ interface input {
     clicks-per-second: func() -> tuple<u32, u32>;
 }
 
+/// Capability `entities` (experimental: the manifest needs
+/// `experimental = ["entities"]`): the entities the game tracks around the
+/// player, as of the current tick.
+interface entities {
+    /// One entity in the world.
+    record entity {
+        /// The entity's numeric id, unique while it is in the world.
+        id: u32,
+        /// `minecraft:pig`, `minecraft:player`, `minecraft:minecart`, ...
+        kind: string,
+        /// Feet position, in blocks.
+        x: f64,
+        y: f64,
+        z: f64,
+        /// Degrees, as the player's `game.player.yaw`.
+        yaw: f32,
+        /// Hit points as vanilla counts them, when the entity has any
+        /// (paintings and item frames have none).
+        health: option<f32>,
+        /// The entity's custom name, when it has one.
+        custom-name: option<string>,
+    }
+    /// The entities within `radius` blocks of the player (`radius` at most
+    /// 1024; the 256 nearest are kept, nearest first), as of this tick.
+    /// None on the title screen.
+    %list: func(radius: f32) -> option<list<entity>>;
+    /// The entity with this numeric id, as of this tick; none when it is
+    /// not in the world or the player is on the title screen.
+    get: func(id: u32) -> option<entity>;
+}
+
 /// Capability `render` (experimental: the manifest needs
 /// `experimental = ["render"]`): shapes the game draws for the mod with its
 /// own renderer, kept until the mod replaces them (no call per frame). A mod
@@ -813,6 +844,7 @@ world horizon-ui-mod {
     import ui;
     import render;
     import input;
+    import entities;
     import recipes;
     import browser;
     export ui-events;
@@ -834,4 +866,9 @@ world render-host {
 world recipes-host {
     import recipes;
     import browser;
+}
+
+/// The game's side of capability `entities` (imports only).
+world entities-host {
+    import entities;
 }
