@@ -16,26 +16,31 @@ environment:
 install:
   - appveyor DownloadFile https://win.rustup.rs/x86_64 -FileName rustup-init.exe
   - rustup-init.exe -y --profile minimal --default-toolchain stable
-  # Only the job whose files the push touched builds (the other one finishes
-  # green in seconds with a message on the build's page). The diff is against
-  # the parent commit, so a multi-commit push sees its last commit only.
-  # appveyor.yml itself wakes both jobs.
+
+build_script:
+  # Only the job whose files the push touched builds; the other one finishes
+  # green in seconds (its note is on the build's Messages tab). The diff is
+  # against the parent commit, so a multi-commit push sees its last commit
+  # only. appveyor.yml itself wakes both jobs.
   - ps: |
+      $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
       $changed = @(git diff --name-only HEAD~1 HEAD 2>$null | Where-Object { $_ })
       $touched = if ($env:JOB -eq 'launcher') {
         $changed | Where-Object { $_ -like 'launcher/*' -or $_ -eq 'appveyor.yml' }
       } else {
         $changed | Where-Object { $_ -notlike 'launcher/*' }
       }
-      if (-not $touched) {
+      if ($touched) {
+        if ($env:JOB -eq 'launcher') {
+          cargo build --release --manifest-path launcher/Cargo.toml
+        } else {
+          cargo build --release -p horizon-client
+        }
+        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      } else {
+        Write-Host "Skipped: nothing changed for JOB=$($env:JOB)."
         Add-AppveyorMessage "Nothing changed for JOB=$($env:JOB); its build is skipped."
-        appveyor SetVariable -Name SKIP_BUILD -Value 1
       }
-
-build_script:
-  - set PATH=%USERPROFILE%\.cargo\bin;%PATH%
-  - rustup default stable
-  - if "%SKIP_BUILD%"=="1" (echo Skipped: nothing changed for %JOB%) else (if "%JOB%"=="launcher" (cargo build --release --manifest-path launcher/Cargo.toml) else (cargo build --release -p horizon-client))
 
 artifacts:
   - path: launcher\target\release\horizon-launcher.exe
