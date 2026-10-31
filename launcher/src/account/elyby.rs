@@ -259,16 +259,16 @@ pub fn oauth_authorize_url(client_id: &str, redirect_uri: &str, state: &str) -> 
     )
 }
 
-/// Opens the system browser at `url`. `explorer` hands the URL to the
-/// player's default browser untouched: a `cmd /c start` line both opens a
-/// console window and cuts the URL at the first `&` (cmd reads it as a
-/// command separator), which leaves the authorize page without its
-/// redirect_uri and response_type.
+/// Opens the system browser at `url`. `rundll32`'s FileProtocolHandler is
+/// the shell's own way to follow a URL: `cmd /c start` both opens a console
+/// window and cuts the URL at the first `&` (cmd reads it as a command
+/// separator), and `explorer` takes a bare URL for a path and falls back to
+/// opening the Documents folder.
 pub fn open_browser(url: &str) -> Result<(), String> {
     #[cfg(windows)]
     {
-        crate::process::command("explorer")
-            .arg(url)
+        crate::process::command("rundll32")
+            .args(["url.dll,FileProtocolHandler", url])
             .spawn()
             .map_err(|e| format!("Could not open a browser: {e}"))?;
     }
