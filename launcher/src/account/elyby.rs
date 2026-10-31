@@ -17,8 +17,8 @@ use std::{
     time::Duration,
 };
 
-use base64::Engine;
 use super::{Account, AccountKind, Secrets};
+use base64::Engine;
 
 /// The ely.by authserver (the authlib-injector `ely.by` metadata's base).
 pub const AUTHSERVER: &str = "https://authserver.ely.by";
@@ -177,24 +177,51 @@ pub fn invalidate(secrets: &Secrets) {
     );
 }
 
-/// The ely.by player's profile: its `textures` property names the skin on
-/// `skins.ely.by`. The launcher's own requests go through the player's proxy,
-/// so this works even where the game's own network can't reach ely.by; the
+/// The ely.by player's skin: `(url, model)`. The authserver's profile API
+/// (docs.ely.by, "Ely.by API") answers a name lookup
+/// (`/api/users/profiles/minecraft/<name>`) with the profile's id, and the
+/// profile by id (`/api/minecraft/session/profile/<id>`) with a `textures`
+/// property. The launcher's own requests go through the player's proxy, so
+/// this works even where the game's own network can't reach ely.by; the
 /// game gets the skin URL in the session file and needs no network for it.
 pub fn skin_for(name: &str) -> Option<(String, String)> {
-    let url = format!("https://authserver.ely.by/api/profiles/minecraft/{name}");
-    let response = request_to("GET", &url).call().ok()?;
-    let v: Value = serde_json::from_str(&response.into_string().ok()?).ok()?;
-    let property = v.get("properties")?.as_array()?.iter().find(|p| {
-        p.get("name").and_then(Value::as_str) == Some("textures")
-    })?;
+    let lookup = request_to(
+        "GET",
+        &format!("{AUTHSERVER}/api/users/profiles/minecraft/{name}"),
+    )
+    .call()
+    .ok()?;
+    let v: Value = serde_json::from_str(&lookup.into_string().ok()?).ok()?;
+    let id = str_field(&v, "id")?;
+    let profile = request_to(
+        "GET",
+        &format!("{AUTHSERVER}/api/minecraft/session/profile/{id}"),
+    )
+    .call()
+    .ok()?;
+    let v: Value = serde_json::from_str(&profile.into_string().ok()?).ok()?;
+    let property = v
+        .get("properties")?
+        .as_array()?
+        .iter()
+        .find(|p| p.get("name").and_then(Value::as_str) == Some("textures"))?;
     let value = property.get("value")?.as_str()?;
-    let decoded: Value =
-        serde_json::from_slice(&base64::engine::general_purpose::STANDARD.decode(value).ok()?)
-            .ok()?;
+    let decoded: Value = serde_json::from_slice(
+        &base64::engine::general_purpose::STANDARD
+            .decode(value)
+            .ok()?,
+    )
+    .ok()?;
     let texture = decoded.get("textures")?.get("SKIN")?;
     let url = texture.get("url")?.as_str()?.to_owned();
-    if !url.starts_with("http://skins.ely.by/") && !url.starts_with("https://skins.ely.by/") {
+    // Ely.by keeps its skins on its own hosts: the storage paths its profile
+    // payloads name today (`ely.by/storage/skins/…`) and the older
+    // `skins.ely.by` (docs.ely.by, skins system).
+    if !url.starts_with("http://ely.by/")
+        && !url.starts_with("https://ely.by/")
+        && !url.starts_with("http://skins.ely.by/")
+        && !url.starts_with("https://skins.ely.by/")
+    {
         return None;
     }
     let model = texture
@@ -321,15 +348,13 @@ pub fn oauth_exchange(
     let text = response.into_string().unwrap_or_default();
     let v: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
     if status >= 400 {
-        let why = str_field(&v, "error_description").unwrap_or_else(|| str_field(&v, "error").unwrap_or_default());
+        let why = str_field(&v, "error_description")
+            .unwrap_or_else(|| str_field(&v, "error").unwrap_or_default());
         return Err(format!("ely.by refused the code: {why}"));
     }
     let access = str_field(&v, "access_token").ok_or("No access_token from ely.by")?;
     let refresh = str_field(&v, "refresh_token").ok_or("No refresh_token from ely.by")?;
-    let expires = v
-        .get("expires_in")
-        .and_then(Value::as_u64)
-        .unwrap_or(86400);
+    let expires = v.get("expires_in").and_then(Value::as_u64).unwrap_or(86400);
     Ok((access, refresh, expires))
 }
 
@@ -349,7 +374,10 @@ pub fn oauth_account_info(access_token: &str) -> Result<(String, String), String
     let text = response.into_string().unwrap_or_default();
     let v: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
     if status >= 400 {
-        return Err(format!("ely.by refused the token: {}", str_field(&v, "message").unwrap_or_default()));
+        return Err(format!(
+            "ely.by refused the token: {}",
+            str_field(&v, "message").unwrap_or_default()
+        ));
     }
     let uuid = str_field(&v, "uuid").ok_or("No uuid from ely.by")?;
     let name = str_field(&v, "username").ok_or("No username from ely.by")?;
@@ -367,7 +395,10 @@ pub fn oauth_refresh(
         ("client_id", client_id),
         ("client_secret", client_secret),
         ("grant_type", "refresh_token"),
-        ("scope", "account_info offline_access minecraft_server_session"),
+        (
+            "scope",
+            "account_info offline_access minecraft_server_session",
+        ),
         ("refresh_token", refresh_token),
     ];
     let response = match request_to("POST", url)
@@ -384,15 +415,13 @@ pub fn oauth_refresh(
     let text = response.into_string().unwrap_or_default();
     let v: Value = serde_json::from_str(&text).unwrap_or(Value::Null);
     if status >= 400 {
-        let why = str_field(&v, "error_description").unwrap_or_else(|| str_field(&v, "error").unwrap_or_default());
+        let why = str_field(&v, "error_description")
+            .unwrap_or_else(|| str_field(&v, "error").unwrap_or_default());
         return Err(format!("ely.by refused the refresh: {why}"));
     }
     let access = str_field(&v, "access_token").ok_or("No access_token from ely.by")?;
     let refresh = str_field(&v, "refresh_token").unwrap_or_else(|| refresh_token.to_owned());
-    let expires = v
-        .get("expires_in")
-        .and_then(Value::as_u64)
-        .unwrap_or(86400);
+    let expires = v.get("expires_in").and_then(Value::as_u64).unwrap_or(86400);
     Ok((access, refresh, expires))
 }
 
@@ -477,10 +506,13 @@ impl SignIn {
                     .next()
                     .and_then(|p| p.trim_end_matches('/').parse::<u16>().ok())
                     .unwrap_or(45678);
-                let state_token = format!("{:016x}", std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_nanos())
-                    .unwrap_or(0));
+                let state_token = format!(
+                    "{:016x}",
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map(|d| d.as_nanos())
+                        .unwrap_or(0)
+                );
                 let url = oauth_authorize_url(&client_id, &redirect_uri, &state_token);
                 open_browser(&url)?;
                 let (code, returned_state) = listen_for_code(port)?;

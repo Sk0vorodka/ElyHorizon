@@ -1275,9 +1275,19 @@ pub fn session_for_game(game_home: &Path) -> Result<(Option<PathBuf>, Option<Str
         &mut accounts,
     )?;
     let _ = accounts.save();
-    let Some((account, secrets)) = pass.session else {
+    let Some((mut account, secrets)) = pass.session else {
         return Ok((None, pass.offline));
     };
+    // An ely.by account signed in while ely.by had no answer (or before the
+    // launcher fetched skins at all): ask once now and keep the answer, so
+    // the game gets the skin and the launches after it don't ask again.
+    if account.skin.is_none() && account.kind == AccountKind::Elyby {
+        if let Some(skin) = elyby::skin_for(&account.name) {
+            account.skin = Some(skin);
+            accounts.update(account.clone());
+            let _ = accounts.save();
+        }
+    }
     match write_session_file(&game_home.join("sessions"), &account, &secrets) {
         Ok(file) => Ok((Some(file), None)),
         Err(e) => Ok((None, Some(e))),

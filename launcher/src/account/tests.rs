@@ -567,10 +567,33 @@ fn session_files_are_private_and_complete() {
     let v: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
     assert_eq!(
         v,
-        json!({"name": "Notch", "uuid": UUID, "access_token": "mc-token", "user_type": "msa", "xuid": "25"})
+        json!({"name": "Notch", "uuid": UUID, "access_token": "mc-token", "user_type": "msa", "xuid": "25", "skin_url": null, "skin_model": null})
     );
     // The refresh token never leaves the keychain.
     assert!(!v.to_string().contains("\"r\""));
+    // An ely.by account with a skin: the URL and model go along, so the game
+    // needs no network to show it.
+    let account = Account {
+        uuid: "069a79f444e94726a5befca90e38aaf5".into(),
+        name: "ElyPlayer".into(),
+        skin: Some(("http://ely.by/storage/skins/abc.png".into(), "slim".into())),
+        cape: None,
+        kind: AccountKind::Elyby,
+    };
+    let secrets = Secrets {
+        refresh_token: String::new(),
+        minecraft_token: "ely-token".into(),
+        minecraft_expires_at: 1,
+        xuid: None,
+        owns: true,
+        client_token: None,
+    };
+    let path = write_session_file(&dir, &account, &secrets).unwrap();
+    let v: Value = serde_json::from_str(&std::fs::read_to_string(&path).unwrap()).unwrap();
+    assert_eq!(
+        v,
+        json!({"name": "ElyPlayer", "uuid": "069a79f444e94726a5befca90e38aaf5", "access_token": "ely-token", "user_type": "elyby", "xuid": null, "skin_url": "http://ely.by/storage/skins/abc.png", "skin_model": "slim"})
+    );
     #[cfg(unix)]
     {
         use std::os::unix::fs::PermissionsExt;

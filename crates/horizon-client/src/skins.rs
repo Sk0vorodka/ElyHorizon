@@ -29,10 +29,12 @@ pub const TEXTURE_URIS: [&str; 2] = [
     "https://textures.minecraft.net/texture/{textureId}",
     "http://textures.minecraft.net/texture/{textureId}",
 ];
-/// Ely.by's authlib-injector profile endpoint (`/api/profiles/minecraft/<name>`):
-/// a player registered through ely.by has `properties` there (its `textures`
-/// names a `skins.ely.by` URL), so a skin shows whoever the launcher was.
-pub const ELYBY_PROFILE: &str = "https://authserver.ely.by/api/profiles/minecraft/";
+/// Ely.by's authserver's profile API (docs.ely.by, "Ely.by API"): the name
+/// lookup answers `{id, name}`, the profile by id answers the `properties`
+/// with the `textures`. A player registered through ely.by has its skin
+/// there, so a skin shows whoever the launcher was.
+pub const ELYBY_PROFILE_BY_NAME: &str = "https://authserver.ely.by/api/users/profiles/minecraft/";
+pub const ELYBY_PROFILE_BY_ID: &str = "https://authserver.ely.by/api/minecraft/session/profile/";
 
 /// `java.util.Base64.getDecoder().decode`.
 pub fn base64_decode(text: &str) -> Option<Vec<u8>> {
@@ -104,8 +106,11 @@ pub fn unpack(value: &str, signature: Signature, valid_uris: &[&str]) -> Texture
         let allowed = valid_uris
             .iter()
             .any(|u| url.starts_with(&u.replace("{textureId}", "")))
-            // Ely.by skins live on skins.ely.by (the authserver's skinDomains);
-            // their texture payloads name http://skins.ely.by/… URLs.
+            // Ely.by skins live on ely.by's own hosts (its skinDomains): the
+            // storage paths its profile payloads name today
+            // (`ely.by/storage/skins/…`) and the older `skins.ely.by`.
+            || url.starts_with("http://ely.by/")
+            || url.starts_with("https://ely.by/")
             || url.starts_with("http://skins.ely.by/")
             || url.starts_with("https://skins.ely.by/");
         if !allowed {
@@ -241,12 +246,15 @@ fn valid_player_name(name: &str) -> bool {
     name.encode_utf16().count() <= 16 && name.encode_utf16().all(|c| c > 32 && c < 127)
 }
 
-/// An ely.by player's profile, by name (authlib-injector's
-/// `GET /api/profiles/minecraft/<name>`). `None` when ely.by has no such
-/// player, or is unreachable: the caller keeps whatever it already has.
+/// An ely.by player's profile, by name: the authserver's name lookup answers
+/// `{id, name}`, and the profile by id answers the `properties` (the
+/// `textures` in them is unsigned). `None` when ely.by has no such player,
+/// or is unreachable: the caller keeps whatever it already has.
 pub fn elyby_profile(name: &str) -> Option<ResolvedProfile> {
-    let url = format!("{ELYBY_PROFILE}{}", name.to_lowercase());
-    let body = http_get(&url)?;
+    let lookup = http_get(&format!("{ELYBY_PROFILE_BY_NAME}{}", name.to_lowercase()))?;
+    let v: serde_json::Value = serde_json::from_slice(&lookup).ok()?;
+    let id = crate::auth::parse_uuid(v.get("id")?.as_str()?)?;
+    let body = http_get(&format!("{ELYBY_PROFILE_BY_ID}{id:032x}"))?;
     let v: serde_json::Value = serde_json::from_slice(&body).ok()?;
     Some(ResolvedProfile {
         id: crate::auth::parse_uuid(v.get("id")?.as_str()?)?,
@@ -267,7 +275,6 @@ pub fn elyby_profile(name: &str) -> Option<ResolvedProfile> {
             .collect::<Option<Vec<_>>>()?,
     })
 }
-
 
 /// `fetchByNameOrId`: `getByName` answers `{id, name}`; `getProfileById`
 /// (`fetchProfile(id, requireSecure)`) answers `{id, name, properties}` —
@@ -304,8 +311,8 @@ fn resolve_profile(key: &NameOrId, doc: &serde_json::Value) -> Option<ResolvedPr
         })
         .collect::<Option<Vec<_>>>()?;
     // Mojang sold no textures (the player is not a Mojang account): ask
-    // ely.by, whose players' skins live on `skins.ely.by` (authlib-injector's
-    // profile endpoint). This is how ely.by skins show whoever the launcher was.
+    // ely.by, whose players' skins live on ely.by's own hosts. This is how
+    // ely.by skins show whoever the launcher was.
     if !properties.iter().any(|(n, _, _)| n == "textures") {
         if let Some(ely) = elyby_profile(&name) {
             return Some(ely);
@@ -882,10 +889,17 @@ mod tests {
     #[test]
     fn elyby_skin_urls_unpack() {
         use super::{Signature, TEXTURE_URIS, unpack};
-        // An ely.by textures payload: skins live on skins.ely.by, signed by
-        // ely.by's own key (docs.ely.by, skins system).
-        let value = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly9za2lucy5lbHkuYnkvc2tpbnMvYWJjLnBuZyJ9fX0=";
-        let t = unpack(value, Signature::Signed, &TEXTURE_URIS);
+        // An ely.by textures payload: skins live on ely.by's own hosts —
+        // the storage paths its profile payloads name today, and the older
+        // skins.ely.by (docs.ely.by, skins system).
+        let storage = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly9lbHkuYnkvc3RvcmFnZS9za2lucy9hYmMucG5nIn19fQ==";
+        let t = unpack(storage, Signature::Unsigned, &TEXTURE_URIS);
+        assert_eq!(
+            t.skin.as_deref(),
+            Some("http://ely.by/storage/skins/abc.png")
+        );
+        let older = "eyJ0ZXh0dXJlcyI6eyJTS0lOIjp7InVybCI6Imh0dHA6Ly9za2lucy5lbHkuYnkvc2tpbnMvYWJjLnBuZyJ9fX0=";
+        let t = unpack(older, Signature::Signed, &TEXTURE_URIS);
         assert_eq!(t.skin.as_deref(), Some("http://skins.ely.by/skins/abc.png"));
         // A URL outside both services' domains stays refused.
         let outsider =
