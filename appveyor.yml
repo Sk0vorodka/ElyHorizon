@@ -30,17 +30,23 @@ build_script:
       } else {
         $changed | Where-Object { $_ -notlike 'launcher/*' -and $_ -notlike 'appveyor.yml' }
       }
-      if ($touched) {
-        if ($env:JOB -eq 'launcher') {
-          cargo build --release --manifest-path launcher/Cargo.toml
-        } else {
-          cargo build --release -p horizon-client
-        }
-        if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-      } else {
+      if (-not $touched) {
         Write-Host "Skipped: nothing changed for JOB=$($env:JOB)."
         Add-AppveyorMessage "Nothing changed for JOB=$($env:JOB); its build is skipped."
+        exit 0
       }
+      # Cargo says its warnings to stderr, and in a PowerShell block a line in
+      # stderr reads as an error (the script runs with ErrorActionPreference
+      # Stop): a finished build died on its own warnings once already. The
+      # build goes through cmd, which lets warnings be warnings, and the exit
+      # code is checked after.
+      $build = if ($env:JOB -eq 'launcher') {
+        'cargo build --release --manifest-path launcher/Cargo.toml'
+      } else {
+        'cargo build --release -p horizon-client'
+      }
+      cmd /c $build
+      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
 artifacts:
   - path: launcher\target\release\horizon-launcher.exe

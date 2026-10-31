@@ -1483,9 +1483,8 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
         } => {
             if ely_oauth {
                 use horizon_launcher::account::elyby::{
-                    OAUTH_CLIENT_ID_DEFAULT, OAUTH_CLIENT_SECRET_DEFAULT,
-                    OAUTH_CLIENT_ID_ENV, OAUTH_CLIENT_SECRET_ENV, OAUTH_REDIRECT_URI_ENV,
-                    OAUTH_DEFAULT_REDIRECT_URI,
+                    OAUTH_CLIENT_ID_DEFAULT, OAUTH_CLIENT_ID_ENV, OAUTH_CLIENT_SECRET_DEFAULT,
+                    OAUTH_CLIENT_SECRET_ENV, OAUTH_DEFAULT_REDIRECT_URI, OAUTH_REDIRECT_URI_ENV,
                 };
                 let client_id = std::env::var(OAUTH_CLIENT_ID_ENV)
                     .unwrap_or_else(|_| OAUTH_CLIENT_ID_DEFAULT.to_owned());
@@ -1498,10 +1497,13 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
                     .next()
                     .and_then(|p| p.trim_end_matches('/').parse::<u16>().ok())
                     .unwrap_or(45678);
-                let state = format!("{:016x}", std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map(|d| d.as_nanos())
-                    .unwrap_or(0));
+                let state = format!(
+                    "{:016x}",
+                    std::time::SystemTime::now()
+                        .duration_since(std::time::UNIX_EPOCH)
+                        .map(|d| d.as_nanos())
+                        .unwrap_or(0)
+                );
                 let url = horizon_launcher::account::elyby::oauth_authorize_url(
                     &client_id,
                     &redirect_uri,
@@ -1509,17 +1511,17 @@ fn account_command(action: AccountCmd, as_json: bool) -> Result<(), String> {
                 );
                 println!("Open this URL in a browser to sign in with ely.by:\n{url}");
                 horizon_launcher::account::elyby::open_browser(&url)?;
-                let (code, returned_state) = horizon_launcher::account::elyby::listen_for_code(port)?;
+                let (code, returned_state) =
+                    horizon_launcher::account::elyby::listen_for_code(port)?;
                 if returned_state != state {
                     return Err("The OAuth state did not match; try again.".into());
                 }
-                let (access, refresh, expires) =
-                    horizon_launcher::account::elyby::oauth_exchange(
-                        &client_id,
-                        &client_secret,
-                        &redirect_uri,
-                        &code,
-                    )?;
+                let (access, refresh, expires) = horizon_launcher::account::elyby::oauth_exchange(
+                    &client_id,
+                    &client_secret,
+                    &redirect_uri,
+                    &code,
+                )?;
                 let (uuid, name) = horizon_launcher::account::elyby::oauth_account_info(&access)?;
                 let account = account::Account {
                     uuid: uuid.replace('-', "").to_lowercase(),
