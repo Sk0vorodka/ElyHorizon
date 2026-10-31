@@ -3553,28 +3553,32 @@ impl Launcher {
                 }
                 cx.notify();
             }));
-            let oauth = button(
-                "ely-oauth",
-                "Sign in with browser",
-                Kind::Ghost,
-                &t,
-            )
-            .on_click(cx.listener(|this, _: &ClickEvent, _, cx| {
-                if matches!(
-                    this.ely_sign_in_state,
-                    Some(horizon_launcher::account::elyby::Step::Starting)
-                ) {
-                    return;
-                }
-                this.ely_sign_in = Some(horizon_launcher::account::elyby::SignIn::start_oauth());
-                this.ely_sign_in_state = Some(horizon_launcher::account::elyby::Step::Starting);
-                cx.notify();
-            }));
+            let oauth = button("ely-oauth", "Sign in with browser", Kind::Ghost, &t).on_click(
+                cx.listener(|this, _: &ClickEvent, _, cx| {
+                    if matches!(
+                        this.ely_sign_in_state,
+                        Some(horizon_launcher::account::elyby::Step::Starting)
+                    ) {
+                        return;
+                    }
+                    this.ely_sign_in =
+                        Some(horizon_launcher::account::elyby::SignIn::start_oauth());
+                    this.ely_sign_in_state = Some(horizon_launcher::account::elyby::Step::Starting);
+                    cx.notify();
+                }),
+            );
             let register = button("ely-register", "Create an account", Kind::Ghost, &t).on_click(
                 move |_, _, cx| cx.open_url(horizon_launcher::account::elyby::REGISTER_URL),
             );
-            actions = actions
-                .child(div().flex().gap(px(4.)).child(sign_in).child(oauth).child(register));
+            actions = actions.child(
+                div()
+                    .flex()
+                    .flex_wrap()
+                    .gap(px(4.))
+                    .child(sign_in)
+                    .child(oauth)
+                    .child(register),
+            );
         } else {
             actions = actions.child(
                 button("ely-open", "Sign in with Ely.by", Kind::Ghost, &t).on_click(cx.listener(
@@ -3586,13 +3590,22 @@ impl Launcher {
                 )),
             );
         }
+        // The texts the form carries stay within a width the row's left side
+        // can live with: a text's unwrapped width is the actions column's
+        // flex base, and when it outgrows the panel the left column (which
+        // only grows into leftover space) collapses to nothing.
         if let Some(horizon_launcher::account::elyby::Step::Done(Err(e))) = &self.ely_sign_in_state
         {
-            actions = actions.child(div().text_color(t.danger).child(e.clone()));
+            actions = actions.child(div().max_w(px(560.)).text_color(t.danger).child(e.clone()));
         } else if self.ely_sign_in_state.is_some() || self.ely_form_open {
-            actions = actions.child(div().text_color(t.muted).child(tr(
-                "Ely.by signs you in with your e-mail and password; a two-factor account asks for a 6-digit code. Accounts are made at ely.by.",
-            )));
+            actions = actions.child(
+                div()
+                    .max_w(px(560.))
+                    .text_color(t.muted)
+                    .child(tr(
+                        "Ely.by signs you in with your e-mail and password; a two-factor account asks for a 6-digit code. Accounts are made at ely.by.",
+                    )),
+            );
         }
         let detail = div()
             .child(tr(
