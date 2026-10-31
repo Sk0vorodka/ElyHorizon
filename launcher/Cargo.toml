@@ -73,3 +73,11 @@ winresource = "0.1"
 
 [profile.release]
 strip = true
+
+# A lighter, quicker-to-link build for limited-memory machines: no LTO, more
+# codegen units, incremental. Use `cargo build --profile fast`.
+[profile.fast]
+inherits = "release"
+lto = false
+codegen-units = 16
+incremental = true
