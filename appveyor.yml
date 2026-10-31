@@ -21,32 +21,42 @@ build_script:
   # Only the job whose files the push touched builds; the other one finishes
   # green in seconds (its note is on the build's Messages tab). The diff is
   # against the parent commit, so a multi-commit push sees its last commit
-  # only. A push that only changes this file wakes no job at all.
+  # only. A push that only changes this file wakes no job at all; NEW BUILD
+  # in the web UI forces both.
   - ps: |
+      $ErrorActionPreference = 'Continue'
       $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
-      $changed = @(git diff --name-only HEAD~1 HEAD 2>$null | Where-Object { $_ })
-      $touched = if ($env:JOB -eq 'launcher') {
-        $changed | Where-Object { $_ -like 'launcher/*' }
+      if ($env:APPVEYOR_FORCED_BUILD -eq 'True') {
+        Write-Host "Forced build: building JOB=$($env:JOB) whatever changed."
       } else {
-        $changed | Where-Object { $_ -notlike 'launcher/*' -and $_ -notlike 'appveyor.yml' }
-      }
-      if (-not $touched) {
-        Write-Host "Skipped: nothing changed for JOB=$($env:JOB)."
-        Add-AppveyorMessage "Nothing changed for JOB=$($env:JOB); its build is skipped."
-        exit 0
+        $changed = @(git diff --name-only HEAD~1 HEAD 2>$null | Where-Object { $_ })
+        $touched = if ($env:JOB -eq 'launcher') {
+          $changed | Where-Object { $_ -like 'launcher/*' }
+        } else {
+          $changed | Where-Object { $_ -notlike 'launcher/*' -and $_ -notlike 'appveyor.yml' }
+        }
+        if (-not $touched) {
+          Write-Host "Skipped: nothing changed for JOB=$($env:JOB)."
+          Add-AppveyorMessage "Nothing changed for JOB=$($env:JOB); its build is skipped."
+          return
+        }
       }
       # Cargo says its warnings to stderr, and in a PowerShell block a line in
-      # stderr reads as an error (the script runs with ErrorActionPreference
-      # Stop): a finished build died on its own warnings once already. The
-      # build goes through cmd, which lets warnings be warnings, and the exit
+      # stderr reads as an error (the runner merges stderr into its capture
+      # and runs with ErrorActionPreference Stop): two finished builds died on
+      # their own warnings already, and cmd in between does not help — its
+      # child's stderr is cmd's too. The redirection happens inside the cmd
+      # line (`2>&1`), so the warnings arrive as plain output, and the exit
       # code is checked after.
       $build = if ($env:JOB -eq 'launcher') {
-        'cargo build --release --manifest-path launcher/Cargo.toml'
+        'cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
       } else {
-        'cargo build --release -p horizon-client'
+        'cargo build --release -p horizon-client 2>&1'
       }
       cmd /c $build
-      if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+      if ($LASTEXITCODE -ne 0) {
+        throw "cargo build for JOB=$($env:JOB) exited with $LASTEXITCODE"
+      }
 
 artifacts:
   - path: launcher\target\release\horizon-launcher.exe
