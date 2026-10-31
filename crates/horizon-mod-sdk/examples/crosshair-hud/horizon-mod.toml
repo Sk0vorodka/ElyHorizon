@@ -1,0 +1,9 @@
+id = "crosshair_hud"
+name = "Crosshair HUD"
+version = "0.1.0"
+description = "What is under your crosshair in a corner of the screen: the block's name or the entity's kind, health and custom name, Jade-style. /chud hides or shows the panel."
+authors = ["Horizon"]
+api = "0.1"
+side = "client"
+capabilities = ["game-read", "hud", "target"]
+experimental = ["target"]

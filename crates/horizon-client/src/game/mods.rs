@@ -480,6 +480,7 @@ impl Game<'_> {
             placing: self.mod_recipe_screen(),
             creative: self.creative,
             entities: self.mod_entities(),
+            crosshair: self.mod_target(),
         }
     }
     /// The entities the game tracks (`entities.list` and `entities.get`):
@@ -503,6 +504,60 @@ impl Game<'_> {
                 custom_name: m.custom_name.clone(),
             })
             .collect()
+    }
+    /// What is under the crosshair (`target.look`): the nearer of the block
+    /// and the entity within reach, as the attack reach draws them.
+    /// [`Game::mob_hit`] walks the mobs' boxes, [`Game::clip_ray`] the
+    /// blocks; collected only while a mod reads them.
+    fn mod_target(&self) -> Option<horizon_mods::ModCrosshair> {
+        if !self.mods.mods.wants_target() {
+            return None;
+        }
+        let eye = self.eye_position()?;
+        let dir = view_vector(self.yaw, self.pitch);
+        let (entity_reach, block_reach): (f64, f64) = if self.creative {
+            (5.0, 5.0)
+        } else {
+            (3.0, 4.5)
+        };
+        let entity = self
+            .mob_hit()
+            .filter(|(_, t)| *t <= entity_reach)
+            .and_then(|(i, t)| {
+                let m = &self.mobs[i];
+                Some(horizon_mods::ModEntityTarget {
+                    id: m.id,
+                    kind: m.kind.id.clone(),
+                    distance: t as f32,
+                    health: (m.kind.max_health > 0.0).then_some(m.health),
+                    custom_name: m.custom_name.clone(),
+                })
+            });
+        let block = self.clip_ray(eye, dir, block_reach).and_then(|hit| {
+            let state = self.world.block(hit.pos[0], hit.pos[1], hit.pos[2])?;
+            Some(horizon_mods::ModBlockTarget {
+                block_x: hit.pos[0],
+                block_y: hit.pos[1],
+                block_z: hit.pos[2],
+                block: self.res.facts().get(state).name.to_string(),
+                distance: (0..3)
+                    .map(|i| (hit.point[i] - eye[i]).powi(2))
+                    .sum::<f64>()
+                    .sqrt() as f32,
+            })
+        });
+        match (block, entity) {
+            (Some(b), Some(e)) => {
+                if e.distance <= b.distance {
+                    Some(horizon_mods::ModCrosshair::Entity(e))
+                } else {
+                    Some(horizon_mods::ModCrosshair::Block(b))
+                }
+            }
+            (Some(b), None) => Some(horizon_mods::ModCrosshair::Block(b)),
+            (None, Some(e)) => Some(horizon_mods::ModCrosshair::Entity(e)),
+            (None, None) => None,
+        }
     }
     /// The first block along the player's view within
     /// [`horizon_mods::RAYCAST_MAX`] and its distance from the eye

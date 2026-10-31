@@ -112,6 +112,19 @@ mod entities_bindings {
 /// The entities the game tracks (WIT `interface entities`).
 pub use entities_bindings::horizon::mods::entities::Entity as ModEntity;
 use entities_bindings::{EntitiesHost, horizon::mods::entities};
+/// Capability `target`'s imports (docs/mods.md): what is under the
+/// crosshair.
+mod target_bindings {
+    wasmtime::component::bindgen!({
+        path: "../horizon-mod-sdk/wit",
+        world: "target-host",
+    });
+}
+/// What the crosshair is over (WIT `interface target`).
+pub use target_bindings::horizon::mods::target::{
+    BlockTarget as ModBlockTarget, Crosshair as ModCrosshair, EntityTarget as ModEntityTarget,
+};
+use target_bindings::{TargetHost, horizon::mods::target};
 
 /// A mod's linear memory cap.
 const MEMORY: usize = 64 << 20;
@@ -186,6 +199,9 @@ pub struct Snapshot {
     /// the game collects them only while a mod reads them
     /// ([`Mods::wants_entities`]). Empty on the title screen.
     pub entities: Arc<[ModEntity]>,
+    /// What is under the player's crosshair, for capability `target`; the
+    /// game works it out only while a mod reads it ([`Mods::wants_target`]).
+    pub crosshair: Option<ModCrosshair>,
 }
 
 /// Capability `recipes`'s tables: `items` in the registry's order, which
@@ -337,6 +353,8 @@ struct Running {
     raycasts: bool,
     /// It imports capability `entities`.
     entities: bool,
+    /// It imports capability `target`.
+    target: bool,
     /// It imports capability `recipes`.
     reads_recipes: bool,
 }
@@ -571,6 +589,8 @@ impl Mods {
                 .map_err(|e| e.to_string())?;
             EntitiesHost::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
                 .map_err(|e| e.to_string())?;
+            TargetHost::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
+                .map_err(|e| e.to_string())?;
             self.engine = Some((engine, linker));
         }
         Ok(self.engine.as_ref().expect("made above"))
@@ -707,6 +727,7 @@ impl Mods {
             hooks,
             raycasts: functions.iter().any(|f| f == "game.raycast"),
             entities: functions.iter().any(|f| f.starts_with("entities.")),
+            target: functions.iter().any(|f| f.starts_with("target.")),
             reads_recipes: functions.iter().any(|f| f.starts_with("recipes.")),
         }))
     }
@@ -996,6 +1017,13 @@ impl Mods {
         self.entries
             .iter()
             .any(|e| e.run.as_ref().is_some_and(|r| r.entities))
+    }
+    /// Some running mod reads capability `target`: the snapshot needs
+    /// [`Snapshot::crosshair`].
+    pub fn wants_target(&self) -> bool {
+        self.entries
+            .iter()
+            .any(|e| e.run.as_ref().is_some_and(|r| r.target))
     }
     /// The panel beside container screens (`browser.set-items`): the first
     /// running mod with items or recipes, its index, the panel's version and
@@ -1464,6 +1492,11 @@ impl entities::Host for State {
     }
     fn get(&mut self, id: u32) -> Option<ModEntity> {
         self.snapshot.entities.iter().find(|e| e.id == id).cloned()
+    }
+}
+impl target::Host for State {
+    fn look(&mut self) -> Option<ModCrosshair> {
+        self.snapshot.crosshair.clone()
     }
 }
 impl browser::Host for State {

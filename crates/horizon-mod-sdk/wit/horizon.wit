@@ -306,6 +306,44 @@ interface entities {
     get: func(id: u32) -> option<entity>;
 }
 
+/// Capability `target` (experimental: the manifest needs
+/// `experimental = ["target"]`): what is under the player's crosshair, as
+/// Jade-style tooltips show it.
+interface target {
+    /// A block the crosshair is over.
+    record block-target {
+        /// The block's position.
+        block-x: s32,
+        block-y: s32,
+        block-z: s32,
+        /// `minecraft:stone`, ...
+        block: string,
+        /// From the player's eyes to the point hit, in blocks.
+        distance: f32,
+    }
+    /// An entity the crosshair is over.
+    record entity-target {
+        /// The entity's numeric id (`entities.get` takes it).
+        id: u32,
+        /// `minecraft:pig`, `minecraft:player`, ...
+        kind: string,
+        /// From the player's eyes to the entity's box, in blocks.
+        distance: f32,
+        /// Hit points, when the entity has any.
+        health: option<f32>,
+        custom-name: option<string>,
+    }
+    /// The nearer of the block and the entity under the crosshair.
+    variant crosshair {
+        block(block-target),
+        entity(entity-target),
+    }
+    /// What is under the player's crosshair within reach (blocks to 4.5
+    /// blocks, entities to 3, 5 in creative), as of this tick. None when
+    /// nothing is in reach, or on the title screen.
+    look: func() -> option<crosshair>;
+}
+
 /// Capability `render` (experimental: the manifest needs
 /// `experimental = ["render"]`): shapes the game draws for the mod with its
 /// own renderer, kept until the mod replaces them (no call per frame). A mod
@@ -845,6 +883,7 @@ world horizon-ui-mod {
     import render;
     import input;
     import entities;
+    import target;
     import recipes;
     import browser;
     export ui-events;
@@ -871,4 +910,9 @@ world recipes-host {
 /// The game's side of capability `entities` (imports only).
 world entities-host {
     import entities;
+}
+
+/// The game's side of capability `target` (imports only).
+world target-host {
+    import target;
 }

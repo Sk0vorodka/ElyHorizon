@@ -98,6 +98,8 @@ pub enum Capability {
     /// The entities around the player, as the game tracks them
     /// (interface `entities`).
     Entities,
+    /// What is under the player's crosshair (interface `target`).
+    Target,
     /// The players on the server and messages to them (server mods).
     Players,
     /// Blocks in the server's loaded chunks, and changes to them (server
@@ -108,7 +110,7 @@ pub enum Capability {
     Recipes,
 }
 impl Capability {
-    pub const ALL: [Capability; 13] = [
+    pub const ALL: [Capability; 14] = [
         Capability::GameRead,
         Capability::Chat,
         Capability::Hud,
@@ -119,6 +121,7 @@ impl Capability {
         Capability::Render,
         Capability::Input,
         Capability::Entities,
+        Capability::Target,
         Capability::Players,
         Capability::World,
         Capability::Recipes,
@@ -143,6 +146,7 @@ impl Capability {
             Capability::Render => "render",
             Capability::Input => "input",
             Capability::Entities => "entities",
+            Capability::Target => "target",
             Capability::Players => "players",
             Capability::World => "world",
             Capability::Recipes => "recipes",
@@ -157,6 +161,7 @@ impl Capability {
                 | Capability::Render
                 | Capability::Input
                 | Capability::Entities
+                | Capability::Target
                 | Capability::Recipes
         )
     }
@@ -175,6 +180,7 @@ impl Capability {
                 "see the keys you hold and your clicks, take over the use button on its own items and the mouse wheel, and add keys"
             }
             Capability::Entities => "see the entities around you",
+            Capability::Target => "see what is under your crosshair",
             Capability::Players => "see who is on the server and message them",
             Capability::World => "read and change the world's blocks",
             Capability::Recipes => {
@@ -219,6 +225,7 @@ impl fmt::Display for Capability {
             Capability::Render => "render",
             Capability::Input => "input",
             Capability::Entities => "entities",
+            Capability::Target => "target",
             Capability::Players => "players",
             Capability::World => "world",
             Capability::Recipes => "recipes",
