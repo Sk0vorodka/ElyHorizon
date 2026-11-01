@@ -220,7 +220,7 @@ checksum = "72b3254f16251a8381aa12e40e3c4d2f0199f8c6508fbecb9d91f575e0fbb8c6"
 name = "beacons"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -474,7 +474,7 @@ dependencies = [
 name = "coords-hud"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -746,7 +746,7 @@ checksum = "a31eee39dddec8330830986fcd7625edb5a24ec90ea038215273bbc3adb08ac6"
 name = "crosshair-hud"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -919,7 +919,7 @@ dependencies = [
 name = "entity-radar"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -948,7 +948,7 @@ checksum = "0b5343afd4a8365a643ac588dab4cf234a190c7f6c88c9f6dd6ffe00837661b7"
 name = "far-view"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -1047,7 +1047,7 @@ dependencies = [
 name = "fps-overlay"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -1508,13 +1508,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "horizon-mod-sdk"
-version = "0.1.0"
-dependencies = [
- "wit-bindgen 0.60.0",
-]
-
-[[package]]
 name = "horizon-mods"
 version = "0.1.0"
 dependencies = [
@@ -1536,14 +1529,14 @@ dependencies = [
 name = "horizon-mods-test-guest"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
 name = "horizon-mods-test-ui-guest"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -2005,7 +1998,7 @@ dependencies = [
 name = "keystrokes"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -2169,7 +2162,7 @@ dependencies = [
 name = "minimap"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -2914,7 +2907,7 @@ dependencies = [
 name = "predator-missile"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -3047,7 +3040,7 @@ dependencies = [
 name = "recipes"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -3166,6 +3159,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cfcb3a22ef46e85b45de6ee7e79d063319ebb6594faafcf1c225ea92ab6e9b92"
 dependencies = [
  "semver",
+]
+
+[[package]]
+name = "rustcraft-sdk"
+version = "0.1.0"
+dependencies = [
+ "wit-bindgen 0.60.0",
 ]
 
 [[package]]
@@ -4416,7 +4416,7 @@ dependencies = [
 name = "welcome"
 version = "0.1.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]
@@ -5389,7 +5389,7 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 name = "zoom"
 version = "1.0.0"
 dependencies = [
- "horizon-mod-sdk",
+ "rustcraft-sdk",
 ]
 
 [[package]]

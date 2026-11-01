@@ -10,7 +10,7 @@ description = "A mod that shows widgets, for horizon-mods' sandbox tests"
 crate-type = ["cdylib"]
 
 [dependencies]
-horizon-mod-sdk = { path = "../../../horizon-mod-sdk" }
+rustcraft-sdk = { path = "../../../rustcraft-sdk" }
 
 [lints]
 workspace = true

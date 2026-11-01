@@ -10,7 +10,7 @@ description = "Horizon's official zoom: hold a key to zoom, the wheel changes it
 crate-type = ["cdylib"]
 
 [dependencies]
-horizon-mod-sdk = { path = "../../../crates/horizon-mod-sdk" }
+rustcraft-sdk = { path = "../../../crates/rustcraft-sdk" }
 
 [lints]
 workspace = true

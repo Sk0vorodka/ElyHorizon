@@ -30,7 +30,7 @@ description = "`/where` puts them in chat, `/coords` hides or shows the panel."
 authors = ["Horizon"]
 owners = ["ludovic111"]
 license = "MIT"
-source = "https://github.com/horizon-rust/horizon/tree/main/crates/horizon-mod-sdk/examples/coords-hud"
+source = "https://github.com/horizon-rust/horizon/tree/main/crates/rustcraft-sdk/examples/coords-hud"
 icon = "icons/coords_hud.png"
 key = "RWTVtuGb/GRXcBf3Re5hzM07EzoStr2sLTJjghJia0xX15ULoZRFFZDb"
 

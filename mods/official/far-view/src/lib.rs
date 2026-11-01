@@ -3,7 +3,7 @@
 //! its own workers). Its settings page picks how far it reaches and the far
 //! tiles' detail, kept in the mod's storage (`distance`, `detail`). The
 //! player's own LOD Distance setting, when on, wins over the mod.
-use horizon_mod_sdk::{
+use rustcraft_sdk::{
     Mod, Registration,
     render::{self, FarTerrain},
     storage,
@@ -86,4 +86,4 @@ impl Mod for FarView {
     }
 }
 
-horizon_mod_sdk::export_mod!(FarView);
+rustcraft_sdk::export_mod!(FarView);

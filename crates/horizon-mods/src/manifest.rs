@@ -192,7 +192,12 @@ impl Capability {
     /// mod has; `Err` for an import Horizon does not offer.
     pub fn of_import(name: &str) -> Result<Option<Capability>, String> {
         let unknown = || format!("imports {name}, which Horizon does not offer");
-        let rest = name.strip_prefix("horizon:mods/").ok_or_else(unknown)?;
+        // The fork's package is `rustcraft:mods`; components built by the
+        // SDK before the rename import `horizon:mods` and stay loadable.
+        let rest = name
+            .strip_prefix("rustcraft:mods/")
+            .or_else(|| name.strip_prefix("horizon:mods/"))
+            .ok_or_else(unknown)?;
         let (interface, version) = rest.split_once('@').ok_or_else(unknown)?;
         if !version.starts_with("0.1.") {
             return Err(format!("needs API {version}; this Horizon runs {API}"));
@@ -473,7 +478,7 @@ capabilities = ["game-read", "hud"]
         assert_eq!(m.side, Side::Client);
         assert_eq!(m.capabilities, [Capability::GameRead, Capability::Hud]);
         let ok = [
-            "horizon:mods/log@0.1.0",
+            "rustcraft:mods/log@0.1.0",
             "horizon:mods/game@0.1.0",
             "horizon:mods/hud@0.1.2",
         ];
@@ -485,7 +490,7 @@ capabilities = ["game-read", "hud"]
         );
         assert!(m.check_imports(["wasi:filesystem/types@0.2.0"]).is_err());
         assert!(m.check_imports(["horizon:mods/game@0.2.0"]).is_err());
-        let storage = m.check_imports(["horizon:mods/storage@0.1.0"]);
+        let storage = m.check_imports(["rustcraft:mods/storage@0.1.0"]);
         assert_eq!(
             storage,
             Err("uses capability storage, missing from horizon-mod.toml".into())
@@ -496,7 +501,7 @@ capabilities = ["game-read", "hud"]
         );
         let with_storage = EXAMPLE.replace("\"hud\"", "\"hud\", \"storage\"");
         let m = Manifest::parse(&with_storage).unwrap();
-        assert_eq!(m.check_imports(["horizon:mods/storage@0.1.0"]), Ok(()));
+        assert_eq!(m.check_imports(["rustcraft:mods/storage@0.1.0"]), Ok(()));
     }
 
     #[test]
@@ -517,7 +522,7 @@ capabilities = ["game-read", "hud"]
             ))
         };
         let m = server("0.3", "server", "\"players\", \"storage\"").unwrap();
-        let imports = ["horizon:mods/players@0.1.0", "horizon:mods/storage@0.1.0"];
+        let imports = ["horizon:mods/players@0.1.0", "rustcraft:mods/storage@0.1.0"];
         assert_eq!(m.check_imports(imports), Ok(()));
         for (api, side) in [("0.3", "client"), ("0.3", "both"), ("0.1", "server")] {
             let e = server(api, side, "").unwrap_err();

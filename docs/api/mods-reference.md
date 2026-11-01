@@ -1,7 +1,7 @@
-<!-- Generated from crates/horizon-mod-sdk/wit/horizon.wit and the manifest's capabilities by crates/horizon-mods/tests/api_reference.rs; a test fails when this file is out of date. Update it with: HORIZON_WRITE_DOCS=1 cargo test -p horizon-mods --features pack --test api_reference -->
+<!-- Generated from crates/rustcraft-sdk/wit/horizon.wit and the manifest's capabilities by crates/horizon-mods/tests/api_reference.rs; a test fails when this file is out of date. Update it with: HORIZON_WRITE_DOCS=1 cargo test -p horizon-mods --features pack --test api_reference -->
 # Mod API reference
 
-The contract between Horizon and its mods: the WIT package `horizon:mods@0.1.0`, every interface, type, function and hook in it, and the capabilities a manifest may list. The guide is [mods.md](../mods.md); stability and versions: [stability.md](stability.md). Manifest `api` lines this game serves: `0.1`, `0.2`, `0.3`.
+The contract between Horizon and its mods: the WIT package `rustcraft:mods@0.1.0`, every interface, type, function and hook in it, and the capabilities a manifest may list. The guide is [mods.md](../mods.md); stability and versions: [stability.md](stability.md). Manifest `api` lines this game serves: `0.1`, `0.2`, `0.3`.
 
 ## Capabilities
 
@@ -16,34 +16,36 @@ The contract between Horizon and its mods: the WIT package `horizon:mods@0.1.0`,
 | `ui` | [`ui`](#ui) | show its own screens and a settings page |
 | `render` | [`render`](#render) | draw on your screen, shake and zoom the camera |
 | `input` | [`input`](#input) | see the keys you hold and your clicks, take over the use button on its own items and the mouse wheel, and add keys |
+| `entities` | [`entities`](#entities) | see the entities around you |
+| `target` | [`target`](#target) | see what is under your crosshair |
 | `players` | [`players`](#players) | see who is on the server and message them |
 | `world` | [`world`](#world) | read and change the world's blocks |
 | `recipes` | [`recipes`](#recipes) | read the game's recipes and items and which recipes you know, place recipes in your crafting grid and, in creative mode, give you items |
 
-## World `horizon-mod`
+## World `rustcraft-mod`
 
 A client mod: runs in the player's game.
 
 - Imports (what the game offers): `log`, `game`, `chat`, `hud`, `storage`, `command`
 - Exports (what the mod provides): `events`
 
-## World `horizon-server-mod`
+## World `rustcraft-server-mod`
 
 A server mod (manifest `side = "server"`, `api = "0.3"`, experimental): runs where the world is simulated, on the dedicated server, a LAN host and single player's own server.
 
 - Imports (what the game offers): `log`, `storage`, `players`, `world`
 - Exports (what the mod provides): `server-events`
 
-## World `horizon-ui-mod`
+## World `rustcraft-ui-mod`
 
-A mod with widgets (capability `ui`): the SDK builds every mod against this world. Mods built for `horizon-mod` alone (no `ui-events` export) still load and simply hear nothing of their widgets.
+A mod with widgets (capability `ui`): the SDK builds every mod against this world. Mods built for `rustcraft-mod` alone (no `ui-events` export) still load and simply hear nothing of their widgets.
 
-- Imports (what the game offers): `ui`, `render`, `input`, `recipes`, `browser`, `log`, `game`, `chat`, `hud`, `storage`, `command`
+- Imports (what the game offers): `ui`, `render`, `input`, `entities`, `target`, `recipes`, `browser`, `log`, `game`, `chat`, `hud`, `storage`, `command`
 - Exports (what the mod provides): `ui-events`, `events`
 
 ## World `ui-host`
 
-The game's side of `horizon-ui-mod` beyond `horizon-mod`.
+The game's side of `rustcraft-ui-mod` beyond `rustcraft-mod`.
 
 - Imports (what the game offers): `ui`
 - Exports (what the mod provides): `ui-events`
@@ -60,6 +62,20 @@ The game's side of capability `render` (imports only).
 The game's side of capability `recipes` (imports only).
 
 - Imports (what the game offers): `recipes`, `browser`
+- Exports (what the mod provides): 
+
+## World `entities-host`
+
+The game's side of capability `entities` (imports only).
+
+- Imports (what the game offers): `entities`
+- Exports (what the mod provides): 
+
+## World `target-host`
+
+The game's side of capability `target` (imports only).
+
+- Imports (what the game offers): `target`
 - Exports (what the mod provides): 
 
 ## `log`
@@ -319,6 +335,75 @@ A mapping as the player has bound it.
 | `claim-wheel` | `func(on: bool)` | Takes the mouse wheel while playing (true) or gives it back: while taken, its steps are the mod's `wheel` events and the hotbar doesn't move. The game gives it back when the mod stops. |
 | `mapping` | `func(name: string) -> option<mapping-state>` | A movement or click mapping as the player has bound it: `key.forward`, `key.left`, `key.back`, `key.right`, `key.jump`, `key.sneak`, `key.sprint`, `key.attack` or `key.use`. None for another name. |
 | `clicks-per-second` | `func() -> tuple<u32, u32>` | Clicks of the attack and use buttons in the last second. |
+
+## `entities`
+
+Access: capability `entities`.
+
+Capability `entities` (experimental: the manifest needs `experimental = ["entities"]`): the entities the game tracks around the player, as of the current tick.
+
+### record `entity`
+
+One entity in the world.
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `u32` | The entity's numeric id, unique while it is in the world. |
+| `kind` | `string` | `minecraft:pig`, `minecraft:player`, `minecraft:minecart`, ... |
+| `x` | `f64` | Feet position, in blocks. |
+| `y` | `f64` |  |
+| `z` | `f64` |  |
+| `yaw` | `f32` | Degrees, as the player's `game.player.yaw`. |
+| `health` | `option<f32>` | Hit points as vanilla counts them, when the entity has any (paintings and item frames have none). |
+| `custom-name` | `option<string>` | The entity's custom name, when it has one. |
+
+| Function | Signature | What it does |
+| --- | --- | --- |
+| `list` | `func(radius: f32) -> option<list<entity>>` | The entities within `radius` blocks of the player (`radius` at most 1024; the 256 nearest are kept, nearest first), as of this tick. None on the title screen. |
+| `get` | `func(id: u32) -> option<entity>` | The entity with this numeric id, as of this tick; none when it is not in the world or the player is on the title screen. |
+
+## `target`
+
+Access: capability `target`.
+
+Capability `target` (experimental: the manifest needs `experimental = ["target"]`): what is under the player's crosshair, as Jade-style tooltips show it.
+
+### record `block-target`
+
+A block the crosshair is over.
+
+| Field | Type | |
+| --- | --- | --- |
+| `block-x` | `s32` | The block's position. |
+| `block-y` | `s32` |  |
+| `block-z` | `s32` |  |
+| `block` | `string` | `minecraft:stone`, ... |
+| `distance` | `f32` | From the player's eyes to the point hit, in blocks. |
+
+### record `entity-target`
+
+An entity the crosshair is over.
+
+| Field | Type | |
+| --- | --- | --- |
+| `id` | `u32` | The entity's numeric id (`entities.get` takes it). |
+| `kind` | `string` | `minecraft:pig`, `minecraft:player`, ... |
+| `distance` | `f32` | From the player's eyes to the entity's box, in blocks. |
+| `health` | `option<f32>` | Hit points, when the entity has any. |
+| `custom-name` | `option<string>` |  |
+
+### variant `crosshair`
+
+The nearer of the block and the entity under the crosshair.
+
+| Case | Payload | |
+| --- | --- | --- |
+| `block` | `block-target` |  |
+| `entity` | `entity-target` |  |
+
+| Function | Signature | What it does |
+| --- | --- | --- |
+| `look` | `func() -> option<crosshair>` | What is under the player's crosshair within reach (blocks to 4.5 blocks, entities to 3, 5 in creative), as of this tick. None when nothing is in reach, or on the title screen. |
 
 ## `render`
 

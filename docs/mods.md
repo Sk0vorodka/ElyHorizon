@@ -12,9 +12,9 @@ folder, loads no runtime and plays exactly like vanilla 26.3.
 
 | Part | Where | State |
 |---|---|---|
-| The contract (WIT) | `crates/horizon-mod-sdk/wit/horizon.wit` | 0.1: log, game-read, chat, hud, storage, command, ui; tick, frame, chat and command hooks |
-| SDK for mod authors | `crates/horizon-mod-sdk` | 0.1 |
-| Example mods | `crates/horizon-mod-sdk/examples/coords-hud`, `examples/predator-missile` | coordinates, facing and time HUD, `/where`, `/coords`; `/missile`, a guided missile from vanilla commands |
+| The contract (WIT) | `crates/rustcraft-sdk/wit/horizon.wit` | 0.1: log, game-read, chat, hud, storage, command, ui; tick, frame, chat and command hooks |
+| SDK for mod authors | `crates/rustcraft-sdk` | 0.1 |
+| Example mods | `crates/rustcraft-sdk/examples/coords-hud`, `examples/predator-missile` | coordinates, facing and time HUD, `/where`, `/coords`; `/missile`, a guided missile from vanilla commands |
 | Horizon's official mods | `mods/official/` | the extras moving to the registry: FPS Counter (`fps-overlay`), Keystrokes, Zoom, Minimap; Far View (`far-view`), distant terrain; and Recipes, a recipe viewer |
 | Runtime | `crates/horizon-mods` | wasmtime 48 LTS, component model |
 | Authoring tool | `crates/cargo-horizon-mod` | `cargo horizon-mod new [--template code\|content] / build / run / test / check`, and the registry's CI (`registry build / review / list`) |
@@ -325,17 +325,17 @@ any mod, whatever it was written in.
 
 ```
 my-mod/
-├── Cargo.toml           # cdylib, horizon-mod-sdk, release: opt-level "s", LTO
+├── Cargo.toml           # cdylib, rustcraft-sdk, release: opt-level "s", LTO
 ├── horizon-mod.toml     # the manifest
 ├── src/lib.rs           # impl Mod, export_mod!
 └── tests/hello.toml     # cargo horizon-mod test
 ```
 
-A mod is a type implementing `horizon_mod_sdk::Mod`; its state lives in the
+A mod is a type implementing `rustcraft_sdk::Mod`; its state lives in the
 type:
 
 ```rust
-use horizon_mod_sdk::{Mod, Registration, chat};
+use rustcraft_sdk::{Mod, Registration, chat};
 
 struct Hello { greeted: u32 }
 
@@ -349,11 +349,11 @@ impl Mod for Hello {
         Ok(None)
     }
 }
-horizon_mod_sdk::export_mod!(Hello);
+rustcraft_sdk::export_mod!(Hello);
 ```
 
 Hooks not asked for keep their default bodies. The full example is
-[`coords-hud`](../crates/horizon-mod-sdk/examples/coords-hud/src/lib.rs). Logic
+[`coords-hud`](../crates/rustcraft-sdk/examples/coords-hud/src/lib.rs). Logic
 that does not touch the API (formatting, maths) is ordinary Rust and unit-tests
 on the host with `cargo test`.
 
@@ -495,9 +495,9 @@ its component targets the WIT world `horizon-server-mod` instead of
 
 Capabilities that act on a local player (`game-read`, `chat`, `hud`) are for
 client mods; `players` is for server mods. In Rust: `impl
-horizon_mod_sdk::server::ServerMod` and `export_server_mod!`; the example is
-[`welcome`](../crates/horizon-mod-sdk/examples/welcome/src/lib.rs), and with
-`world`, [`beacons`](../crates/horizon-mod-sdk/examples/beacons/src/lib.rs).
+rustcraft_sdk::server::ServerMod` and `export_server_mod!`; the example is
+[`welcome`](../crates/rustcraft-sdk/examples/welcome/src/lib.rs), and with
+`world`, [`beacons`](../crates/rustcraft-sdk/examples/beacons/src/lib.rs).
 
 **Typed commands.** Each command in `registration.commands` lists its
 arguments, in order: a name and a kind, required or optional (optional ones

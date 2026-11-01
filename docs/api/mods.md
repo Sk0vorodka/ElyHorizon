@@ -40,16 +40,16 @@ The step-by-step guide, from installing the tools to publishing on the registry,
 
 ## Reference
 
-[mods-reference.md](mods-reference.md), generated from `crates/horizon-mod-sdk/wit/horizon.wit`: every capability,
+[mods-reference.md](mods-reference.md), generated from `crates/rustcraft-sdk/wit/horizon.wit`: every capability,
 interface, type, function and hook, with the limits the guide lists (16 HUD lines of 256 characters, 8 chat lines per
 call, 4 MiB of storage, fuel per call).
 
 ## Examples
 
-- `crates/horizon-mod-sdk/examples/coords-hud`: coordinates, facing and time on the HUD; `/where`, `/coords`; storage.
-- `crates/horizon-mod-sdk/examples/ruby-content`: no code; a gem and a block of ruby from vanilla templates, with
+- `crates/rustcraft-sdk/examples/coords-hud`: coordinates, facing and time on the HUD; `/where`, `/coords`; storage.
+- `crates/rustcraft-sdk/examples/ruby-content`: no code; a gem and a block of ruby from vanilla templates, with
   their recipes, loot, tags, models, textures and names.
-- `crates/horizon-mod-sdk/examples/welcome`: a server mod; greets players who join, announces newcomers (kept in
+- `crates/rustcraft-sdk/examples/welcome`: a server mod; greets players who join, announces newcomers (kept in
   storage), `/online` and `/mined`.
 - `crates/horizon-mods/tests/guest`: a mod that misbehaves on command (spins, panics, grows its memory), for the
   sandbox tests.

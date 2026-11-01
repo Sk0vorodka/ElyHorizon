@@ -10,7 +10,7 @@ description = "Horizon's official FPS counter: frames per second in a corner, wi
 crate-type = ["cdylib"]
 
 [dependencies]
-horizon-mod-sdk = { path = "../../../crates/horizon-mod-sdk" }
+rustcraft-sdk = { path = "../../../crates/rustcraft-sdk" }
 
 [lints]
 workspace = true

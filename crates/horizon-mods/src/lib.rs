@@ -1,5 +1,5 @@
 //! Horizon's mods (`docs/mods.md`): WebAssembly components written against
-//! `crates/horizon-mod-sdk/wit/horizon.wit`, each in its own sandbox with
+//! `crates/rustcraft-sdk/wit/horizon.wit`, each in its own sandbox with
 //! no file, network or clock access, a memory cap and a time budget per
 //! call. A mod that traps or overruns is turned off; the game goes on.
 //!

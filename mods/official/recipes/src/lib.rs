@@ -10,7 +10,7 @@
 //!
 //! On a server that is not Horizon the recipes are the game's own 26.3
 //! ones; `known` and `place` follow the server's recipe book.
-use horizon_mod_sdk::{
+use rustcraft_sdk::{
     Mod, Registration, browser, chat, game, input, recipes,
     recipes::Kind,
     storage,
@@ -361,4 +361,4 @@ impl Mod for Recipes {
     }
 }
 
-horizon_mod_sdk::export_mod!(Recipes);
+rustcraft_sdk::export_mod!(Recipes);

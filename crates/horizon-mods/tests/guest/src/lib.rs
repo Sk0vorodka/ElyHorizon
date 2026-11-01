@@ -3,7 +3,7 @@
 //! capability `storage` on a fixed key, `/save_key <key> <text>` exercises
 //! it on an arbitrary key (for the quota and key-count limits); `tick` and
 //! `frame` do nothing, to measure the cost of a call.
-use horizon_mod_sdk::{Mod, Registration, chat, storage};
+use rustcraft_sdk::{Mod, Registration, chat, storage};
 
 struct Guest {
     ticks: u64,
@@ -60,4 +60,4 @@ impl Mod for Guest {
     }
 }
 
-horizon_mod_sdk::export_mod!(Guest);
+rustcraft_sdk::export_mod!(Guest);

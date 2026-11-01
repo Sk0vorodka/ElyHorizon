@@ -6,7 +6,7 @@
 //! `smooth`, `sensitivity`),
 //! where the game writes a player's old extra settings when it installs the
 //! mod for them.
-use horizon_mod_sdk::{
+use rustcraft_sdk::{
     Mod, Registration,
     input::{self, Event},
     render::{self, Zoom as ZoomView},
@@ -138,4 +138,4 @@ impl Mod for Zoom {
     }
 }
 
-horizon_mod_sdk::export_mod!(Zoom);
+rustcraft_sdk::export_mod!(Zoom);

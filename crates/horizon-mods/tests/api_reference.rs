@@ -5,7 +5,7 @@ use horizon_mods::manifest::{APIS, Capability};
 use std::{fmt::Write, path::Path};
 use wit_parser::{Docs, Function, Handle, Resolve, Type, TypeDefKind, WorldItem};
 
-const WIT: &str = "crates/horizon-mod-sdk/wit/horizon.wit";
+const WIT: &str = "crates/rustcraft-sdk/wit/horizon.wit";
 const DOC: &str = "docs/api/mods-reference.md";
 
 fn root() -> &'static Path {

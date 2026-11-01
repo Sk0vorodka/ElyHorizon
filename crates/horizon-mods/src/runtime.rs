@@ -1,9 +1,9 @@
 //! Loading and calling mods with wasmtime's component model.
 use crate::manifest::{Manifest, Package, Side};
 use server_bindings::{
-    HorizonServerMod,
-    exports::horizon::mods::server_events::Registration as ServerRegistration,
-    horizon::mods::{players, world as mod_world},
+    RustcraftServerMod,
+    exports::rustcraft::mods::server_events::Registration as ServerRegistration,
+    rustcraft::mods::{players, world as mod_world},
 };
 use std::{
     path::{Path, PathBuf},
@@ -17,19 +17,19 @@ use wasmtime::{
 
 mod bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
-        world: "horizon-mod",
+        path: "../rustcraft-sdk/wit",
+        world: "rustcraft-mod",
     });
 }
 /// The server mods' world: `log` and `storage` are the client world's.
 mod server_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
-        world: "horizon-server-mod",
+        path: "../rustcraft-sdk/wit",
+        world: "rustcraft-server-mod",
         additional_derives: [PartialEq],
         with: {
-            "horizon:mods/log": super::bindings::horizon::mods::log,
-            "horizon:mods/storage": super::bindings::horizon::mods::storage,
+            "rustcraft:mods/log": super::bindings::rustcraft::mods::log,
+            "rustcraft:mods/storage": super::bindings::rustcraft::mods::storage,
         },
     });
 }
@@ -38,93 +38,93 @@ mod server_bindings {
 /// as `horizon-mod` and simply hear nothing of their widgets.
 mod ui_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
+        path: "../rustcraft-sdk/wit",
         world: "ui-host",
     });
 }
-pub use bindings::horizon::mods::{
+pub use bindings::rustcraft::mods::{
     game::{Clock, Hit, Player},
     hud::{Corner, Line},
 };
 use bindings::{
-    HorizonMod,
-    exports::horizon::mods::events::Registration,
-    horizon::mods::{chat, command, game, hud, log as mod_log, storage},
+    RustcraftMod,
+    exports::rustcraft::mods::events::Registration,
+    rustcraft::mods::{chat, command, game, hud, log as mod_log, storage},
 };
 pub use server_bindings::{
-    exports::horizon::mods::server_events::{
+    exports::rustcraft::mods::server_events::{
         Argument, ArgumentKind, ArgumentValue, BlockPos, ServerCommand,
     },
-    horizon::mods::players::{GameMode, Player as ServerPlayer},
-    horizon::mods::world::BlockChange,
+    rustcraft::mods::players::{GameMode, Player as ServerPlayer},
+    rustcraft::mods::world::BlockChange,
 };
-type ClientEvents = bindings::exports::horizon::mods::events::Guest;
-type ServerEvents = server_bindings::exports::horizon::mods::server_events::Guest;
+type ClientEvents = bindings::exports::rustcraft::mods::events::Guest;
+type ServerEvents = server_bindings::exports::rustcraft::mods::server_events::Guest;
 /// The widget model a `ui` screen or settings page shows (WIT `interface
 /// ui`), for the game to draw with its menus' own widgets.
-pub use ui_bindings::horizon::mods::ui::{
+pub use ui_bindings::rustcraft::mods::ui::{
     ButtonWidget, ItemWidget, ListWidget, Screen as UiScreen, TextWidget, Widget as UiWidget,
 };
-use ui_bindings::{UiHost, horizon::mods::ui};
+use ui_bindings::{UiHost, rustcraft::mods::ui};
 /// Capability `render`'s imports (docs/mods.md): the game draws the shapes.
 mod render_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
+        path: "../rustcraft-sdk/wit",
         world: "render-host",
     });
 }
-use render_bindings::horizon::mods::input;
+use render_bindings::rustcraft::mods::input;
 /// Capability `input`'s records (WIT `interface input`).
-pub use render_bindings::horizon::mods::input::{Event as InputEvent, HeldItem, ItemUse};
+pub use render_bindings::rustcraft::mods::input::{Event as InputEvent, HeldItem, ItemUse};
 /// What capability `render` asks the game to draw (WIT `interface render`).
-pub use render_bindings::horizon::mods::render::{
+pub use render_bindings::rustcraft::mods::render::{
     Corner as RenderCorner, FarTerrain as ModFarTerrain, FillShape, FrameRate, ItemShape,
     Minimap as ModMinimap, Point as RenderPoint, QuadShape, Rect as RenderRect, Shape, SpriteShape,
     TextShape, Zoom as ModZoom,
 };
-use render_bindings::{RenderHost, horizon::mods::render};
+use render_bindings::{RenderHost, rustcraft::mods::render};
 /// Capability `recipes`'s imports (docs/mods.md): the game's recipes and items.
 mod recipes_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
+        path: "../rustcraft-sdk/wit",
         world: "recipes-host",
     });
 }
 /// Capability `ui`'s recipe viewer panel (WIT `interface browser`).
-pub use recipes_bindings::horizon::mods::browser::{
+pub use recipes_bindings::rustcraft::mods::browser::{
     Click as BrowserClick, Event as BrowserEvent, ItemKey as BrowserItemKey,
     Layout as BrowserLayout, RecipeView as BrowserRecipe, SlotClick as BrowserSlotClick,
     Stack as BrowserStack,
 };
 /// What capability `recipes` reads (WIT `interface recipes`).
-pub use recipes_bindings::horizon::mods::recipes::{
+pub use recipes_bindings::rustcraft::mods::recipes::{
     Item as RecipeItem, Kind as RecipeKind, Recipe, Stack as RecipeStack,
 };
-use recipes_bindings::{RecipesHost, horizon::mods::browser, horizon::mods::recipes};
+use recipes_bindings::{RecipesHost, rustcraft::mods::browser, rustcraft::mods::recipes};
 /// Capability `entities`'s imports (docs/mods.md): the entities around the
 /// player.
 mod entities_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
+        path: "../rustcraft-sdk/wit",
         world: "entities-host",
     });
 }
 /// The entities the game tracks (WIT `interface entities`).
-pub use entities_bindings::horizon::mods::entities::Entity as ModEntity;
-use entities_bindings::{EntitiesHost, horizon::mods::entities};
+pub use entities_bindings::rustcraft::mods::entities::Entity as ModEntity;
+use entities_bindings::{EntitiesHost, rustcraft::mods::entities};
 /// Capability `target`'s imports (docs/mods.md): what is under the
 /// crosshair.
 mod target_bindings {
     wasmtime::component::bindgen!({
-        path: "../horizon-mod-sdk/wit",
+        path: "../rustcraft-sdk/wit",
         world: "target-host",
     });
 }
 /// What the crosshair is over (WIT `interface target`).
-pub use target_bindings::horizon::mods::target::{
+pub use target_bindings::rustcraft::mods::target::{
     BlockTarget as ModBlockTarget, Crosshair as ModCrosshair, EntityTarget as ModEntityTarget,
 };
-use target_bindings::{TargetHost, horizon::mods::target};
+use target_bindings::{TargetHost, rustcraft::mods::target};
 
 /// A mod's linear memory cap.
 const MEMORY: usize = 64 << 20;
@@ -361,8 +361,8 @@ struct Running {
 
 /// A running mod's exports and the hooks its `init` asked for.
 enum Hooks {
-    Client(HorizonMod, Registration),
-    Server(HorizonServerMod, ServerRegistration),
+    Client(RustcraftMod, Registration),
+    Server(RustcraftServerMod, ServerRegistration),
 }
 impl Hooks {
     fn client(&self) -> Option<&Registration> {
@@ -575,7 +575,7 @@ impl Mods {
             config.wasm_component_model(true).consume_fuel(true);
             let engine = Engine::new(&config).map_err(|e| e.to_string())?;
             let mut linker = Linker::new(&engine);
-            HorizonMod::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
+            RustcraftMod::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
                 .map_err(|e| e.to_string())?;
             players::add_to_linker::<State, HasSelf<State>>(&mut linker, |s| s)
                 .map_err(|e| e.to_string())?;
@@ -679,19 +679,19 @@ impl Mods {
             .instantiate(&mut store, &component)
             .map_err(|e| reason(&e))?;
         let (mut hooks, ui) = if server {
-            let exports = HorizonServerMod::new(&mut store, &instance).map_err(|e| reason(&e))?;
+            let exports = RustcraftServerMod::new(&mut store, &instance).map_err(|e| reason(&e))?;
             let r = exports
-                .horizon_mods_server_events()
+                .rustcraft_mods_server_events()
                 .call_init(&mut store)
                 .map_err(|e| reason(&e))??;
             (Hooks::Server(exports, r), None)
         } else {
-            let exports = HorizonMod::new(&mut store, &instance).map_err(|e| reason(&e))?;
+            let exports = RustcraftMod::new(&mut store, &instance).map_err(|e| reason(&e))?;
             // `ui-events` is a mod built since `ui`'s; older mods have no export
             // and stay callable through `events` alone.
             let ui = UiHost::new(&mut store, &instance).ok();
             let r = exports
-                .horizon_mods_events()
+                .rustcraft_mods_events()
                 .call_init(&mut store)
                 .map_err(|e| reason(&e))??;
             (Hooks::Client(exports, r), ui)
@@ -778,7 +778,7 @@ impl Mods {
             fuel,
             |h| h.client().is_some_and(&wants),
             |run| match &run.hooks {
-                Hooks::Client(m, _) => f(m.horizon_mods_events(), &mut run.store),
+                Hooks::Client(m, _) => f(m.rustcraft_mods_events(), &mut run.store),
                 Hooks::Server(..) => Ok(()),
             },
         );
@@ -794,7 +794,7 @@ impl Mods {
             fuel,
             |h| h.server().is_some_and(&wants),
             |run| match &run.hooks {
-                Hooks::Server(m, _) => f(m.horizon_mods_server_events(), &mut run.store),
+                Hooks::Server(m, _) => f(m.rustcraft_mods_server_events(), &mut run.store),
                 Hooks::Client(..) => Ok(()),
             },
         );
@@ -876,9 +876,10 @@ impl Mods {
             return false;
         };
         let result = self.call(i, FUEL_EVENT, |run| match &run.hooks {
-            Hooks::Client(m, _) => m
-                .horizon_mods_events()
-                .call_command(&mut run.store, name, args),
+            Hooks::Client(m, _) => {
+                m.rustcraft_mods_events()
+                    .call_command(&mut run.store, name, args)
+            }
             Hooks::Server(..) => Ok(Ok(None)),
         });
         match result {
@@ -976,7 +977,7 @@ impl Mods {
             }
         };
         let result = self.call(i, FUEL_EVENT, |run| match &run.hooks {
-            Hooks::Server(m, _) => m.horizon_mods_server_events().call_command(
+            Hooks::Server(m, _) => m.rustcraft_mods_server_events().call_command(
                 &mut run.store,
                 player,
                 name,
@@ -1282,17 +1283,17 @@ impl Mods {
     /// A `list` widget's row was picked on a surface of mod `i`.
     pub fn ui_select(&mut self, i: usize, id: u32, row: u32) {
         self.ui_event(i, |ui, s| {
-            ui.horizon_mods_ui_events().call_select(s, id, row)
+            ui.rustcraft_mods_ui_events().call_select(s, id, row)
         });
     }
     /// The player left mod `i`'s screen (Esc or Done).
     pub fn ui_closed(&mut self, i: usize) {
-        self.ui_event(i, |ui, s| ui.horizon_mods_ui_events().call_closed(s));
+        self.ui_event(i, |ui, s| ui.rustcraft_mods_ui_events().call_closed(s));
     }
     /// The player opened mod `i`'s settings page.
     pub fn ui_settings_opened(&mut self, i: usize) {
         self.ui_event(i, |ui, s| {
-            ui.horizon_mods_ui_events().call_settings_opened(s)
+            ui.rustcraft_mods_ui_events().call_settings_opened(s)
         });
     }
     /// A `ui-events` call on mod `i`; no export, no call (mods built

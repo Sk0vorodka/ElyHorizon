@@ -65,7 +65,7 @@ fn mods_dir() -> &'static Path {
         let dir = target.join("mods");
         std::fs::create_dir_all(&dir).unwrap();
         let example = |name: &str| {
-            let path = format!("crates/horizon-mod-sdk/examples/{name}/horizon-mod.toml");
+            let path = format!("crates/rustcraft-sdk/examples/{name}/horizon-mod.toml");
             std::fs::read_to_string(root.join(path)).unwrap()
         };
         let mods = [
@@ -208,7 +208,7 @@ fn a_mod_for_a_newer_horizon_is_refused() {
     use horizon_mods::api_level::{LEVEL, imports, needed};
     use wit_parser::{ManglingAndAbi, Resolve};
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let wit = std::fs::read_to_string(root.join("crates/horizon-mod-sdk/wit/horizon.wit"))
+    let wit = std::fs::read_to_string(root.join("crates/rustcraft-sdk/wit/horizon.wit"))
         .unwrap()
         .replace(
             "    set-minimap: func(minimap: option<minimap>);",
@@ -217,7 +217,7 @@ fn a_mod_for_a_newer_horizon_is_refused() {
     let mut resolve = Resolve::default();
     let package = resolve.push_str("horizon.wit", &wit).unwrap();
     let world = resolve
-        .select_world(&[package], Some("horizon-ui-mod"))
+        .select_world(&[package], Some("rustcraft-ui-mod"))
         .unwrap();
     let mut module = wit_component::dummy_module(&resolve, world, ManglingAndAbi::Standard32);
     wit_component::embed_component_metadata(
@@ -241,8 +241,8 @@ id = "too_new"
 name = "Too New"
 version = "0.1.0"
 api = "0.1"
-capabilities = ["game-read", "chat", "hud", "storage", "command", "ui", "render", "input", "recipes"]
-experimental = ["ui", "render", "input", "recipes"]
+capabilities = ["game-read", "chat", "hud", "storage", "command", "ui", "render", "input", "entities", "target", "recipes"]
+experimental = ["ui", "render", "input", "entities", "target", "recipes"]
 "#;
     std::fs::write(dir.join("horizon-mod.toml"), manifest).unwrap();
     std::fs::write(dir.join("mod.wasm"), wasm).unwrap();
@@ -255,8 +255,9 @@ experimental = ["ui", "render", "input", "recipes"]
         needed(imports(&wasm).unwrap().iter().map(String::as_str)).0
     };
     assert_eq!(level("coords_hud.hmod"), 0);
-    // The UI guest draws far terrain (`render.set-far-terrain`).
-    assert_eq!(level("horizon_mods_test_ui_guest.hmod"), LEVEL);
+    // The UI guest draws far terrain (`render.set-far-terrain`, level 7): it
+    // calls none of the functions that arrived after it (`entities`, `target`).
+    assert_eq!(level("horizon_mods_test_ui_guest.hmod"), 7);
 }
 
 #[test]
@@ -882,7 +883,7 @@ capabilities = ["registries"]
 /// `cargo horizon-mod test` on the examples: their own `tests/*.toml` pass.
 #[test]
 fn the_examples_test_scripts_pass() {
-    let examples = Path::new(env!("CARGO_MANIFEST_DIR")).join("../horizon-mod-sdk/examples");
+    let examples = Path::new(env!("CARGO_MANIFEST_DIR")).join("../rustcraft-sdk/examples");
     let mut ran = 0;
     let examples_and_files = [
         ("coords-hud", "coords_hud"),

@@ -45,10 +45,10 @@ Windows builds of both binaries are made on [AppVeyor](https://ci.appveyor.com/p
 
 ## Making a mod
 
-Horizon's mod system (Rust compiled to sandboxed WebAssembly — Java mod jars do not run) carries over untouched, and this fork builds on it. A mod is a `cdylib` crate against [the SDK](crates/horizon-mod-sdk):
+Horizon's mod system (Rust compiled to sandboxed WebAssembly — Java mod jars do not run) carries over untouched, and this fork builds on it. A mod is a `cdylib` crate against [the SDK](crates/rustcraft-sdk):
 
 ```rust
-use horizon_mod_sdk::{Mod, Registration, entities, game, hud::{self, Corner, Line}};
+use rustcraft_sdk::{Mod, Registration, entities, game, hud::{self, Corner, Line}};
 
 struct Radar;
 impl Mod for Radar {
@@ -65,10 +65,10 @@ impl Mod for Radar {
         }
     }
 }
-horizon_mod_sdk::export_mod!(Radar);
+rustcraft_sdk::export_mod!(Radar);
 ```
 
-The SDK's capabilities cover HUD panels and shapes, a minimap, zoom, mod-owned screens with widgets, the entities and the crosshair target around the player, recipes with a recipe-viewer panel, input and storage. Worked examples live in [crates/horizon-mod-sdk/examples](crates/horizon-mod-sdk/examples) (`entity-radar`, `crosshair-hud`, `coords-hud` and more); the contract is [`crates/horizon-mod-sdk/wit/horizon.wit`](crates/horizon-mod-sdk/wit/horizon.wit). See [Mods and data packs](https://playhorizon.dev/docs/mods).
+The SDK's capabilities cover HUD panels and shapes, a minimap, zoom, mod-owned screens with widgets, the entities and the crosshair target around the player, recipes with a recipe-viewer panel, input and storage. Worked examples live in [crates/rustcraft-sdk/examples](crates/rustcraft-sdk/examples) (`entity-radar`, `crosshair-hud`, `coords-hud` and more); the contract is [`crates/rustcraft-sdk/wit/horizon.wit`](crates/rustcraft-sdk/wit/horizon.wit). See [Mods and data packs](https://playhorizon.dev/docs/mods).
 
 ## What works today
 

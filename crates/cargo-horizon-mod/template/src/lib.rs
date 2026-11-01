@@ -1,4 +1,4 @@
-use horizon_mod_sdk::{Mod, Registration, chat};
+use rustcraft_sdk::{Mod, Registration, chat};
 
 struct MyMod {
     greeted: u32,
@@ -16,4 +16,4 @@ impl Mod for MyMod {
     }
 }
 
-horizon_mod_sdk::export_mod!(MyMod);
+rustcraft_sdk::export_mod!(MyMod);

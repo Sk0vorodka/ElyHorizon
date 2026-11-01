@@ -15,7 +15,7 @@
 //! alone: the items again). `/recipe_place ID [all]` places that recipe
 //! with `recipes.place`; `/recipe_give ITEM [COUNT]` gives with
 //! `recipes.give`.
-use horizon_mod_sdk::{
+use rustcraft_sdk::{
     Mod, Registration, browser, chat, command, game,
     input::{self, Event},
     recipes,
@@ -509,4 +509,4 @@ impl Mod for Guest {
     }
 }
 
-horizon_mod_sdk::export_mod!(Guest);
+rustcraft_sdk::export_mod!(Guest);

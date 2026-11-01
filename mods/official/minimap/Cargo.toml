@@ -10,7 +10,7 @@ description = "Horizon's official minimap: a map of the terrain around you in a 
 crate-type = ["cdylib"]
 
 [dependencies]
-horizon-mod-sdk = { path = "../../../crates/horizon-mod-sdk" }
+rustcraft-sdk = { path = "../../../crates/rustcraft-sdk" }
 
 [lints]
 workspace = true

@@ -1,0 +1,8 @@
+id = "locus"
+name = "Locus Compass"
+version = "0.1.0"
+description = "Save waypoints with /locus tag <name>, follow a HUD compass to the nearest one, and /locus go <name> to teleport. Waypoints survive between sessions."
+authors = ["Sk0vorodka"]
+api = "0.1"
+side = "client"
+capabilities = ["game-read", "hud", "chat", "command", "storage"]

@@ -1,0 +1,15 @@
+[workspace]
+
+[package]
+name = "locus"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Horizon mod: waypoints, a HUD compass to the nearest one, and teleport"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rustcraft-sdk = { path = "../../crates/rustcraft-sdk" }

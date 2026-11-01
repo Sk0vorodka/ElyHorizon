@@ -139,8 +139,12 @@ pub fn imports(wasm: &[u8]) -> Result<Vec<String>, String> {
         };
         for import in section {
             let name = import.map_err(|e| e.to_string())?.name.name;
-            // `horizon:mods/render@0.1.0` → `render`.
-            let Some(interface) = name.strip_prefix("horizon:mods/") else {
+            // `rustcraft:mods/render@0.1.0` → `render`; components built by
+            // the SDK before the rename import `horizon:mods/…`.
+            let Some(interface) = name
+                .strip_prefix("rustcraft:mods/")
+                .or_else(|| name.strip_prefix("horizon:mods/"))
+            else {
                 continue;
             };
             let interface = interface.split('@').next().unwrap_or(interface);

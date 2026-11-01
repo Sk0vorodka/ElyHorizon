@@ -1,0 +1,2 @@
+cargo:rerun-if-changed=build.rs
+cargo:rustc-env=DEBUG_OUTPUT_DIR=C:\Users\artem\OneDrive\Desktop\Projects\horizon\mods\locus\target\debug\build\wit-bindgen-rust-macro-36614d3e7ee8b972\out

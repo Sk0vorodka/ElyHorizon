@@ -4,7 +4,7 @@
 //! the mod's storage (`corner`, `size`, `shape`, `zoom`, `rotate`) with the
 //! extra's values, where the game writes a player's old extra settings when
 //! it installs the mod for them.
-use horizon_mod_sdk::{
+use rustcraft_sdk::{
     Mod, Registration,
     render::{self, Corner, Minimap as MapView},
     storage,
@@ -132,4 +132,4 @@ impl Mod for Minimap {
     }
 }
 
-horizon_mod_sdk::export_mod!(Minimap);
+rustcraft_sdk::export_mod!(Minimap);
