@@ -2711,7 +2711,7 @@ impl Launcher {
                 .and_then(|r| backend::notes_summary(&r.body)),
             _ => None,
         };
-        let title = "Horizon";
+        let title = "ElyHorizon";
         // Never squeezed by the rows below: the ping notice can make it tall.
         let mut hero = div()
             .flex()
@@ -3034,7 +3034,7 @@ impl Launcher {
                     .child(group("AI", "terminal"))
                     .child(self.no_ai_row(n + 6, cx))
                     .child(group("About", "info-box"))
-                    .child(index_row(n + 7, "Horizon", Some(plain(&horizon)), horizon_action, &t))
+                    .child(index_row(n + 7, "ElyHorizon", Some(plain(&horizon)), horizon_action, &t))
                     .child(index_row(
                         n + 8,
                         tr("Launcher"),
@@ -4367,20 +4367,32 @@ impl Render for Launcher {
             // The wordmark arrives letter by letter, then gives way to the launcher; a click or
             // a key skips ahead.
             let gone = 1. - ease_out_cubic(reveal / 0.6);
+            // HORIZON arrives letter by letter, as it always has; then the
+            // ely.by blue ELY letters join in front of it, and the wordmark
+            // is the fork's.
+            let stagger = theme::STAGGER.as_secs_f32() * 1.5;
+            let horizon_tail = 6. * stagger + 0.45;
             let word = div()
                 .flex()
                 .font_family(theme::PIXEL)
-                .text_size(px(theme::WORDMARK.px * 0.5))
-                .line_height(px(theme::WORDMARK.px * 0.5))
+                .text_size(px(theme::WORDMARK.px * 0.4))
+                .line_height(px(theme::WORDMARK.px * 0.4))
                 .font_weight(FontWeight::BOLD)
-                .text_color(t.ink)
-                .children("HORIZON".chars().enumerate().map(|(i, c)| {
-                    let at = held - i as f32 * theme::STAGGER.as_secs_f32() * 1.5;
+                .children("ELYHORIZON".chars().enumerate().map(|(i, c)| {
+                    let (color, at) = if i < 3 {
+                        (
+                            gpui::rgb(0x3C8CFF).into(),
+                            held - horizon_tail - i as f32 * theme::STAGGER.as_secs_f32(),
+                        )
+                    } else {
+                        (t.ink, held - (i - 3) as f32 * stagger)
+                    };
                     let p = ease_out_cubic(at / theme::ENTER.as_secs_f32());
                     div()
                         .relative()
                         .opacity(p)
                         .top(px(theme::RISE * 2. * (1. - p)))
+                        .text_color(color)
                         .child(c.to_string())
                 }));
             root = root.child(
