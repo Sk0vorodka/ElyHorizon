@@ -76,11 +76,13 @@ pub fn update(latest: Option<Release>, installed: &[String]) -> Option<Release> 
 /// instance.
 pub fn install(release: &Release, progress: impl Fn(f32)) -> Result<Instance, String> {
     // The digest is looked up under the release's own asset name: the fork's
-    // nightly archives are stamped (ElyHorizonClient-x64-<build>.zip).
-    let (asset_name, _) = release
+    // nightly archives are stamped (ElyHorizonClient-x64-<build>.zip). The
+    // asset holds the URL, so the name is its last segment.
+    let (asset_url, _) = release
         .asset
         .clone()
         .ok_or_else(|| format!("{} has no build for this platform.", release.tag))?;
+    let asset_name = asset_url.rsplit('/').next().unwrap_or_default().to_owned();
     let sha256 = crate::signed::nightly_digest(
         &asset_name,
         &horizon_release_sign::trusted_keys(),
@@ -117,6 +119,7 @@ mod tests {
             body: String::new(),
             date: date.into(),
             asset: asset.then(|| ("https://example/horizon.zip".into(), 1)),
+            asset_name: None,
             prerelease: true,
         }
     }

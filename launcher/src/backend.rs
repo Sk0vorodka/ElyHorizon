@@ -39,6 +39,10 @@ pub struct Release {
     pub body: String,
     pub date: String,
     pub asset: Option<(String, u64)>,
+    /// The asset's file name, when it has one: the signed checksums list
+    /// files by name, and the download's digest is looked up under it (the
+    /// fork's nightlies stamp their archives, so the name is not [ASSET]).
+    pub asset_name: Option<String>,
     /// A GitHub pre-release: the Alpha builds from before every release went out as the release
     /// (v0.2.1 on, docs/release-flow.md). Listed and installed by hand, never as an update.
     pub prerelease: bool,
@@ -266,6 +270,12 @@ pub(crate) fn parse_releases(
                 ))
             })?
         });
+        let asset_name = r["assets"]
+            .as_array()
+            .into_iter()
+            .flatten()
+            .find(|a| asset(a["name"].as_str().unwrap_or_default()))
+            .and_then(|a| a["name"].as_str().map(str::to_owned));
         out.push(Release {
             tag: tag.into(),
             name: r["name"].as_str().unwrap_or_default().into(),
@@ -277,6 +287,7 @@ pub(crate) fn parse_releases(
                 .take(10)
                 .collect(),
             asset: found,
+            asset_name,
             prerelease: r["prerelease"].as_bool().unwrap_or(false),
         });
     }
@@ -3168,6 +3179,7 @@ mod tests {
             body: String::new(),
             date: String::new(),
             asset: Some(("u".into(), 1)),
+            asset_name: Some("horizon-launcher-windows-x64.zip".into()),
             prerelease: false,
         };
         assert!(launcher_update(&[r(own_tag())]).is_none());
@@ -3208,6 +3220,7 @@ mod tests {
             body: String::new(),
             date: String::new(),
             asset: Some(("u".into(), 1)),
+            asset_name: Some("horizon-launcher-windows-x64.zip".into()),
             prerelease: false,
         };
         let mut list = vec![
@@ -3374,6 +3387,7 @@ mod tests {
             body: String::new(),
             date: String::new(),
             asset: Some(("u".into(), 1)),
+            asset_name: Some("horizon-launcher-windows-x64.zip".into()),
             prerelease: false,
         };
         let releases = [r("v2026.10.13"), r("v2026.10.12")];

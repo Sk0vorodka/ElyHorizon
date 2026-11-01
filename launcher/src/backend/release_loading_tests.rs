@@ -37,7 +37,11 @@ fn baseline(load: impl Fn() -> Result<serde_json::Value, String>) -> (Vec<Releas
             &parse_releases(&list, |n| Some(n) == ASSET, is_game_tag),
             &installed_fixture(),
         ),
-        launcher: launcher_update(&parse_releases(&list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag)),
+        launcher: launcher_update(&parse_releases(
+            &list,
+            |n| Some(n) == LAUNCHER_ASSET,
+            is_launcher_tag,
+        )),
     };
     (releases, updates)
 }
