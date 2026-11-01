@@ -25,7 +25,7 @@
     --ink: #e8e8e8;
     --muted: #a8a8a8;
     --pixel: "Press Start 2P", monospace;
-    --body: "VT323", monospace;
+    --body: "VT323", "Courier New", monospace;
   }
 
   * { box-sizing: border-box; }
@@ -77,31 +77,54 @@
     border: 2px solid #000;
     box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .45), inset -2px -3px 0 rgba(0, 0, 0, .45);
     cursor: pointer;
+    transition: transform .12s ease, filter .12s ease;
   }
-  .btn:hover { filter: brightness(1.12); text-decoration: none; }
-  .btn:active { box-shadow: inset -2px -2px 0 rgba(255, 255, 255, .3), inset 2px 3px 0 rgba(0, 0, 0, .45); }
+  .btn:hover { filter: brightness(1.12); text-decoration: none; transform: translateY(-3px); }
+  .btn:active { transform: translateY(0); box-shadow: inset -2px -2px 0 rgba(255, 255, 255, .3), inset 2px 3px 0 rgba(0, 0, 0, .45); }
   .btn.grey {
     background: linear-gradient(180deg, #8f8f8f, var(--stone) 55%, var(--stone-dark));
   }
 
-  /* A panel like the game's tooltips: dark inside, light and dark edges. */
+  /* A panel like the game's tooltips: dark inside, light and dark edges.
+     Hover lifts it a little, the way a held block floats. */
   .panel {
     background: rgba(20, 20, 24, .88);
     border: 2px solid #000;
     box-shadow: inset 2px 2px 0 var(--panel-edge-light), inset -2px -2px 0 var(--panel-edge-dark);
     padding: 20px 22px;
+    transition: transform .15s ease, box-shadow .15s ease, background .15s ease;
+  }
+  .panel.lift:hover {
+    transform: translateY(-6px);
+    background: rgba(28, 28, 34, .92);
+    box-shadow:
+      inset 2px 2px 0 var(--panel-edge-light),
+      inset -2px -2px 0 var(--panel-edge-dark),
+      0 10px 22px rgba(0, 0, 0, .5);
   }
 
   header.site {
     padding: 14px 0;
     border-bottom: 2px solid rgba(0, 0, 0, .55);
     background: rgba(0, 0, 0, .35);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(3px);
   }
   header.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
   .logo { font-family: var(--pixel); font-size: 15px; color: #fff; text-shadow: 2px 2px 0 #000; }
   .logo span { color: var(--grass-light); }
+  nav.site { display: flex; align-items: center; flex-wrap: wrap; }
   nav.site a { font-family: var(--pixel); font-size: 10px; color: var(--muted); margin-left: 18px; }
   nav.site a:hover { color: #fff; text-decoration: none; }
+  .lang {
+    font-family: var(--pixel); font-size: 10px; color: var(--muted);
+    margin-left: 18px; background: none; border: 2px solid #000;
+    box-shadow: inset 1px 1px 0 var(--panel-edge-light), inset -1px -1px 0 var(--panel-edge-dark);
+    padding: 6px 8px; cursor: pointer;
+  }
+  .lang:hover { color: #fff; filter: brightness(1.2); }
 
   .hero { text-align: center; padding: 92px 0 64px; }
   .hero h1 {
@@ -119,7 +142,12 @@
   .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
   .card h3 { font-size: 12px; color: var(--grass-light); margin: 0 0 12px; }
   .card p { margin: 0; color: var(--ink); }
-  .card .icon { font-size: 30px; line-height: 1; margin-bottom: 12px; }
+  .card .icon {
+    font-size: 30px; line-height: 1; margin-bottom: 12px;
+    display: inline-block;
+    transition: transform .15s ease;
+  }
+  .card:hover .icon { transform: translateY(-4px) scale(1.08); }
 
   .downloads { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
   .downloads .panel h3 { font-family: var(--pixel); font-size: 12px; margin: 0 0 8px; color: #fff; }
@@ -141,7 +169,6 @@
   }
   pre.code .k { color: #86c85f; }
   pre.code .s { color: #f5c542; }
-  pre.code .c { color: #7d8a75; }
 
   ul.check { list-style: none; padding: 0; margin: 0; }
   ul.check li { padding-left: 30px; position: relative; margin: 8px 0; }
@@ -169,10 +196,11 @@
   <div class="wrap">
     <div class="logo">ELY<span>HORIZON</span></div>
     <nav class="site">
-      <a href="#features">Features</a>
-      <a href="#download">Download</a>
-      <a href="#mods">Mods</a>
-      <a href="https://github.com/Sk0vorodka/ElyHorizon">Source</a>
+      <a href="#features" data-en="Features" data-ru="Возможности">Features</a>
+      <a href="#download" data-en="Download" data-ru="Загрузка">Download</a>
+      <a href="#mods" data-en="Mods" data-ru="Моды">Mods</a>
+      <a href="https://github.com/Sk0vorodka/ElyHorizon" data-en="Source" data-ru="Исходники">Source</a>
+      <button class="lang" id="lang" type="button">РУС</button>
     </nav>
   </div>
 </header>
@@ -180,73 +208,85 @@
 <main>
   <section class="hero wrap">
     <h1>ELY<span class="ely">HORIZON</span><span class="hz">_</span></h1>
-    <p class="tag">Minecraft: Java Edition, rewritten in Rust — played with <b>ely.by</b> accounts. No Microsoft account needed: your profile, your skin, your worlds.</p>
+    <p class="tag" data-en="Minecraft: Java Edition, rewritten in Rust — played with <b>ely.by</b> accounts. No Microsoft account needed: your profile, your skin, your worlds."
+       data-ru="Minecraft: Java Edition, переписанный на Rust — играется с аккаунтами <b>ely.by</b>. Без аккаунта Microsoft: твой профиль, твой скин, твои миры.">Minecraft: Java Edition, rewritten in Rust — played with <b>ely.by</b> accounts. No Microsoft account needed: your profile, your skin, your worlds.</p>
     <div class="cta">
-      <a class="btn" href="#download">Download for Windows</a>
-      <a class="btn grey" href="https://github.com/Sk0vorodka/ElyHorizon">View source</a>
+      <a class="btn" href="#download" data-en="Download for Windows" data-ru="Скачать для Windows">Download for Windows</a>
+      <a class="btn grey" href="https://github.com/Sk0vorodka/ElyHorizon" data-en="View source" data-ru="Исходный код">View source</a>
     </div>
-    <p class="small">Free · open source · unofficial. You need your own copy of Minecraft: Java Edition.</p>
+    <p class="small" data-en="Free · open source · unofficial. You need your own copy of Minecraft: Java Edition."
+       data-ru="Бесплатно · открытый код · неофициально. Нужна своя копия Minecraft: Java Edition.">Free · open source · unofficial. You need your own copy of Minecraft: Java Edition.</p>
   </section>
 
   <section id="features" class="wrap">
-    <h2>What it plays like</h2>
+    <h2 data-en="What it plays like" data-ru="Что умеет">What it plays like</h2>
     <div class="grid">
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">🔑</div>
-        <h3>ely.by accounts, two ways</h3>
-        <p>Sign in to the launcher with your ely.by e-mail and password (two-factor accounts ask for the 6-digit code), or press <b>Sign in with browser</b> and finish an OAuth page at account.ely.by.</p>
+        <h3 data-en="ely.by accounts, two ways" data-ru="Аккаунты ely.by, два способа">ely.by accounts, two ways</h3>
+        <p data-en="Sign in to the launcher with your ely.by e-mail and password (two-factor accounts ask for the 6-digit code), or press <b>Sign in with browser</b> and finish an OAuth page at account.ely.by."
+           data-ru="Вход в лаунчер по e-mail и паролю ely.by (двухфакторные аккаунты запросят 6-значный код) — или кнопка <b>Sign in with browser</b>: страница OAuth на account.ely.by.">Sign in to the launcher with your ely.by e-mail and password (two-factor accounts ask for the 6-digit code), or press <b>Sign in with browser</b> and finish an OAuth page at account.ely.by.</p>
       </div>
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">🧑‍🌾</div>
-        <h3>Your ely.by skin</h3>
-        <p>The launcher carries your skin to the game through the session file, so the world draws it without reaching ely.by while you play. Old accounts heal on the next launch.</p>
+        <h3 data-en="Your ely.by skin" data-ru="Твой скин ely.by">Your ely.by skin</h3>
+        <p data-en="The launcher carries your skin to the game through the session file, so the world draws it without reaching ely.by while you play. Old accounts heal on the next launch."
+           data-ru="Лаунчер передаёт скин в игру через session-файл — мир рисует его без обращения к ely.by во время игры. Старые аккаунты лечатся сами при следующем запуске.">The launcher carries your skin to the game through the session file, so the world draws it without reaching ely.by while you play. Old accounts heal on the next launch.</p>
       </div>
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">🌍</div>
-        <h3>Vanilla worlds, vanilla rules</h3>
-        <p>The same terrain generation, mobs, redstone and saves as the Java game — checked against it by 281 differential harnesses. Reads your own legally obtained copy of Minecraft.</p>
+        <h3 data-en="Vanilla worlds, vanilla rules" data-ru="Ванильные миры, ванильные правила">Vanilla worlds, vanilla rules</h3>
+        <p data-en="The same terrain generation, mobs, redstone and saves as the Java game — checked against it by 281 differential harnesses. Reads your own legally obtained copy of Minecraft."
+           data-ru="Та же генерация мира, мобы, редстоун и сохранения, что и в Java-игре — сверено с ней 281 дифференциальными тестами. Читает твою собственную легальную копию Minecraft.">The same terrain generation, mobs, redstone and saves as the Java game — checked against it by 281 differential harnesses. Reads your own legally obtained copy of Minecraft.</p>
       </div>
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">🧩</div>
-        <h3>Mods in Rust</h3>
-        <p>A mod is a small Rust crate compiled to a sandboxed WebAssembly component: HUD panels, a minimap, zoom, own screens with widgets, entities around you, the crosshair target, recipes, keys and storage.</p>
+        <h3 data-en="Mods in Rust" data-ru="Моды на Rust">Mods in Rust</h3>
+        <p data-en="A mod is a small Rust crate compiled to a sandboxed WebAssembly component: HUD panels, a minimap, zoom, own screens with widgets, entities around you, the crosshair target, recipes, keys and storage."
+           data-ru="Мод — маленький крейт на Rust, собранный в песочничный WebAssembly-компонент: HUD-панели, миникарта, зум, свои экраны с виджетами, сущности вокруг, цель под прицелом, рецепты, клавиши и хранилище.">A mod is a small Rust crate compiled to a sandboxed WebAssembly component: HUD panels, a minimap, zoom, own screens with widgets, entities around you, the crosshair target, recipes, keys and storage.</p>
       </div>
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">🎮</div>
-        <h3>Play with friends</h3>
-        <p>Open to LAN, a hosted Horizon server without Java, or servers that accept ely.by sessions. Your friend on the Java game, you on the Rust one — same protocol.</p>
+        <h3 data-en="Play with friends" data-ru="Играть с друзьями">Play with friends</h3>
+        <p data-en="Open to LAN, a hosted Horizon server without Java, or servers that accept ely.by sessions. Your friend on the Java game, you on the Rust one — same protocol."
+           data-ru="Открытый мир по сети, сервер Horizon без Java или серверы, принимающие сессии ely.by. Друг в Java-игре, ты в Rust — протокол один.">Open to LAN, a hosted Horizon server without Java, or servers that accept ely.by sessions. Your friend on the Java game, you on the Rust one — same protocol.</p>
       </div>
-      <div class="panel card">
+      <div class="panel lift card">
         <div class="icon">⚡</div>
-        <h3>Native, not Java</h3>
-        <p>No Java runtime while you play: the client and the server are one Rust binary each, started by a small launcher that keeps itself and the game up to date.</p>
+        <h3 data-en="Native, not Java" data-ru="Нативный, не Java">Native, not Java</h3>
+        <p data-en="No Java runtime while you play: the client and the server are one Rust binary each, started by a small launcher that keeps itself and the game up to date."
+           data-ru="Без Java-машины во время игры: клиент и сервер — по одному бинарю Rust, запускаемые компактным лаунчером, который обновляет и себя, и игру.">No Java runtime while you play: the client and the server are one Rust binary each, started by a small launcher that keeps itself and the game up to date.</p>
       </div>
     </div>
   </section>
 
   <section id="download" class="wrap">
-    <h2>Download</h2>
+    <h2 data-en="Download" data-ru="Загрузка">Download</h2>
     <div class="downloads">
-      <div class="panel">
+      <div class="panel lift">
         <h3>Horizon Launcher</h3>
-        <p>Installs the game from your own copy of Minecraft, signs you in with ely.by or Microsoft, keeps everything up to date, and hosts servers from its Servers page.</p>
-        <a class="btn" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">Latest builds</a>
+        <p data-en="Installs the game from your own copy of Minecraft, signs you in with ely.by or Microsoft, keeps everything up to date, and hosts servers from its Servers page."
+           data-ru="Устанавливает игру из твоей копии Minecraft, входит по ely.by или Microsoft, обновляет всё сам и поднимает серверы со страницы Servers.">Installs the game from your own copy of Minecraft, signs you in with ely.by or Microsoft, keeps everything up to date, and hosts servers from its Servers page.</p>
+        <a class="btn" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon" data-en="Latest builds" data-ru="Свежие сборки">Latest builds</a>
         <span class="file">horizon-launcher.exe</span>
       </div>
-      <div class="panel">
+      <div class="panel lift">
         <h3>Horizon Client</h3>
-        <p>The game itself: a native Rust client with the ely.by skin, the mods you turn on, and every vanilla subsystem upstream verifies. The launcher installs it for you.</p>
-        <a class="btn grey" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">Latest builds</a>
+        <p data-en="The game itself: a native Rust client with the ely.by skin, the mods you turn on, and every vanilla subsystem upstream verifies. The launcher installs it for you."
+           data-ru="Сама игра: нативный Rust-клиент со скином ely.by, включёнными модами и всеми ванильными подсистемами, которые сверил upstream. Лаунчер установит его сам.">The game itself: a native Rust client with the ely.by skin, the mods you turn on, and every vanilla subsystem upstream verifies. The launcher installs it for you.</p>
+        <a class="btn grey" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon" data-en="Latest builds" data-ru="Свежие сборки">Latest builds</a>
         <span class="file">horizon-client.exe</span>
       </div>
     </div>
-    <p style="color: var(--muted); margin-top: 14px;">Both files sit on the latest build's <b>Artifacts</b> tab. Not an official Minecraft product; ely.by is not affiliated with Mojang.</p>
+    <p style="color: var(--muted); margin-top: 14px;" data-en="Both files sit on the latest build's <b>Artifacts</b> tab. Not an official Minecraft product; ely.by is not affiliated with Mojang."
+       data-ru="Оба файла — на вкладке <b>Artifacts</b> последней сборки. Не официальный продукт Minecraft; ely.by не связан с Mojang.">Both files sit on the latest build's <b>Artifacts</b> tab. Not an official Minecraft product; ely.by is not affiliated with Mojang.</p>
   </section>
 
   <section id="mods" class="wrap">
-    <h2>Mods in Rust</h2>
+    <h2 data-en="Mods in Rust" data-ru="Моды на Rust">Mods in Rust</h2>
     <div class="panel">
-      <p style="margin-top: 0;">A mod is a <b>cdylib</b> crate against the <b>horizon-mod-sdk</b>: declare your capabilities in <b>horizon-mod.toml</b>, export your mod, and the launcher's runtime runs it in a sandbox — no Java, no jar. Entities, the crosshair target, HUD, screens, recipes, input and storage are in the SDK today.</p>
+      <p style="margin-top: 0;" data-en="A mod is a <b>cdylib</b> crate against the <b>horizon-mod-sdk</b>: declare your capabilities in <b>horizon-mod.toml</b>, export your mod, and the launcher's runtime runs it in a sandbox — no Java, no jar. Entities, the crosshair target, HUD, screens, recipes, input and storage are in the SDK today."
+         data-ru="Мод — крейт <b>cdylib</b> поверх <b>horizon-mod-sdk</b>: объяви возможности в <b>horizon-mod.toml</b>, экспортируй мод — рантайм лаунчера запустит его в песочнице. Без Java и jar. В SDK уже есть сущности, цель под прицелом, HUD, экраны, рецепты, ввод и хранилище.">A mod is a <b>cdylib</b> crate against the <b>horizon-mod-sdk</b>: declare your capabilities in <b>horizon-mod.toml</b>, export your mod, and the launcher's runtime runs it in a sandbox — no Java, no jar. Entities, the crosshair target, HUD, screens, recipes, input and storage are in the SDK today.</p>
       <pre class="code"><span class="k">use</span> horizon_mod_sdk::{Mod, Registration, entities, game, hud::{self, Corner, Line}};
 
 <span class="k">struct</span> Radar;
@@ -265,18 +305,23 @@
     }
 }
 horizon_mod_sdk::export_mod!(Radar);</pre>
-      <p style="margin-bottom: 0;">Worked examples: <a href="https://github.com/Sk0vorodka/ElyHorizon/tree/feat/elyby/crates/horizon-mod-sdk/examples">entity-radar, crosshair-hud, coords-hud and more</a>. The full contract: <a href="https://github.com/Sk0vorodka/ElyHorizon/blob/feat/elyby/crates/horizon-mod-sdk/wit/horizon.wit">horizon.wit</a>.</p>
+      <p style="margin-bottom: 0;" data-en="Worked examples: <a href='https://github.com/Sk0vorodka/ElyHorizon/tree/feat/elyby/crates/horizon-mod-sdk/examples'>entity-radar, crosshair-hud, coords-hud and more</a>. The full contract: <a href='https://github.com/Sk0vorodka/ElyHorizon/blob/feat/elyby/crates/horizon-mod-sdk/wit/horizon.wit'>horizon.wit</a>."
+         data-ru="Готовые примеры: <a href='https://github.com/Sk0vorodka/ElyHorizon/tree/feat/elyby/crates/horizon-mod-sdk/examples'>entity-radar, crosshair-hud, coords-hud и другие</a>. Полный контракт: <a href='https://github.com/Sk0vorodka/ElyHorizon/blob/feat/elyby/crates/horizon-mod-sdk/wit/horizon.wit'>horizon.wit</a>.">Worked examples: <a href="https://github.com/Sk0vorodka/ElyHorizon/tree/feat/elyby/crates/horizon-mod-sdk/examples">entity-radar, crosshair-hud, coords-hud and more</a>. The full contract: <a href="https://github.com/Sk0vorodka/ElyHorizon/blob/feat/elyby/crates/horizon-mod-sdk/wit/horizon.wit">horizon.wit</a>.</p>
     </div>
   </section>
 
   <section class="wrap">
-    <h2>The fine print</h2>
+    <h2 data-en="The fine print" data-ru="Мелким шрифтом">The fine print</h2>
     <div class="panel">
       <ul class="check">
-        <li>Free and open source, MIT-licensed — a fork of <a href="https://github.com/horizon-rust/horizon">Horizon</a> by Ludovic Marie.</li>
-        <li>Accounts by <a href="https://ely.by">ely.by</a>: password + 2FA, or OAuth in the browser; skins come with the account.</li>
-        <li>Works with Microsoft accounts too, exactly as upstream Horizon does.</li>
-        <li>Java mod jars do not run: Horizon's mods are Rust in a sandbox.</li>
+        <li data-en="Free and open source, MIT-licensed — a fork of <a href='https://github.com/horizon-rust/horizon'>Horizon</a> by Ludovic Marie."
+            data-ru="Бесплатно и открыто, лицензия MIT — форк <a href='https://github.com/horizon-rust/horizon'>Horizon</a> от Людовика Мари.">Free and open source, MIT-licensed — a fork of <a href="https://github.com/horizon-rust/horizon">Horizon</a> by Ludovic Marie.</li>
+        <li data-en="Accounts by <a href='https://ely.by'>ely.by</a>: password + 2FA, or OAuth in the browser; skins come with the account."
+            data-ru="Аккаунты от <a href='https://ely.by'>ely.by</a>: пароль + 2FA или OAuth в браузере; скин идёт вместе с аккаунтом.">Accounts by <a href="https://ely.by">ely.by</a>: password + 2FA, or OAuth in the browser; skins come with the account.</li>
+        <li data-en="Works with Microsoft accounts too, exactly as upstream Horizon does."
+            data-ru="Работает и с аккаунтами Microsoft — ровно как upstream Horizon.">Works with Microsoft accounts too, exactly as upstream Horizon does.</li>
+        <li data-en="Java mod jars do not run: Horizon's mods are Rust in a sandbox."
+            data-ru="Java-моды (jar) не запускаются: моды Horizon — это Rust в песочнице.">Java mod jars do not run: Horizon's mods are Rust in a sandbox.</li>
       </ul>
     </div>
   </section>
@@ -284,10 +329,35 @@ horizon_mod_sdk::export_mod!(Radar);</pre>
 
 <footer class="site">
   <div class="wrap">
-    <p class="disclaimer">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. ElyHorizon contains no Minecraft code, assets or data.</p>
-    <p>ElyHorizon — a fork of Horizon (MIT) by Ludovic Marie · ely.by is an independent account service · <a href="https://github.com/Sk0vorodka/ElyHorizon">source</a> · <a href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">builds</a></p>
+    <p class="disclaimer" data-en="Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. ElyHorizon contains no Minecraft code, assets or data."
+       data-ru="Не официальный продукт Minecraft. Не связан с Mojang или Microsoft и не одобрен ими. ElyHorizon не содержит кода, ресурсов или данных Minecraft.">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. ElyHorizon contains no Minecraft code, assets or data.</p>
+    <p data-en="ElyHorizon — a fork of Horizon (MIT) by Ludovic Marie · ely.by is an independent account service · <a href='https://github.com/Sk0vorodka/ElyHorizon'>source</a> · <a href='https://ci.appveyor.com/project/Sk0vorodka/elyhorizon'>builds</a>"
+       data-ru="ElyHorizon — форк Horizon (MIT) от Людовика Мари · ely.by — независимый сервис аккаунтов · <a href='https://github.com/Sk0vorodka/ElyHorizon'>исходники</a> · <a href='https://ci.appveyor.com/project/Sk0vorodka/elyhorizon'>сборки</a>">ElyHorizon — a fork of Horizon (MIT) by Ludovic Marie · ely.by is an independent account service · <a href="https://github.com/Sk0vorodka/ElyHorizon">source</a> · <a href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">builds</a></p>
   </div>
 </footer>
+
+<script>
+  // EN/RU: every translatable node carries data-en and data-ru; the button
+  // swaps them and remembers the choice.
+  (function () {
+    var button = document.getElementById("lang");
+    var nodes = document.querySelectorAll("[data-en][data-ru]");
+    function set(lang) {
+      nodes.forEach(function (el) {
+        el.innerHTML = lang === "ru" ? el.getAttribute("data-ru") : el.getAttribute("data-en");
+      });
+      document.documentElement.lang = lang;
+      button.textContent = lang === "ru" ? "ENG" : "РУС";
+      try { localStorage.setItem("ely-lang", lang); } catch (e) {}
+    }
+    var saved = "en";
+    try { saved = localStorage.getItem("ely-lang") || "en"; } catch (e) {}
+    set(saved);
+    button.addEventListener("click", function () {
+      set(document.documentElement.lang === "ru" ? "en" : "ru");
+    });
+  })();
+</script>
 
 </body>
 </html>
