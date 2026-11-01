@@ -63,7 +63,11 @@ build_script:
       # code is checked after. The client builds with its code-mods runtime
       # (`horizon-client/mods`), and with the tools a version folder ships.
       $build = if ($env:JOB -eq 'launcher') {
-        'cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
+        # HORIZON_LAUNCHER_VERSION is read with option_env! at compile time:
+        # cargo reuses a binary built without it unless the crate is forced
+        # to recompile (the stamp then lands in --version and the
+        # self-update's guard).
+        'cargo clean -p horizon-launcher --manifest-path launcher/Cargo.toml 2>&1; cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
       } else {
         'cargo build --release -p horizon-client --bin horizon-client --bin horizon-ctl -p horizon-server --bin horizon-server --features horizon-client/mods 2>&1'
       }
