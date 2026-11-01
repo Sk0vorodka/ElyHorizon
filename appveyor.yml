@@ -38,6 +38,7 @@ build_script:
             $_ -notlike 'appveyor.yml' -and
             $_ -notlike 'docs/*' -and
             $_ -notlike 'site/*' -and
+            $_ -notlike 'tools/*' -and
             $_ -notlike '*.md'
           }
         }
