@@ -194,5 +194,6 @@
   "RustCraft": "RustCraft",
   "RustCraft + Native": "RustCraft + Native",
   "The installed versions run RustCraft mods: sandboxed `.hmod`s whose permissions the Mods page shows.": "Les versions installées lancent les mods RustCraft : sandbox `.hmod` avec les permissions affichées sur la page Mods.",
-  "Experimental: the launcher compiles native mods (mixin bundles) into a game of its own — the \"Native mods\" instance — and that game runs RustCraft mods too. A native mod's code runs unsandboxed, with your rights; the first build downloads a portable Rust and is managed from the command line.": "Expérimental : le launcher compile les mods natifs (bundles mixin) dans un jeu à part — l'instance « Native mods » — qui lance aussi les mods RustCraft. Le code d'un mod natif tourne sans sandbox, avec vos droits ; la première build télécharge un Rust portable et se gère en ligne de commande."
+  "Experimental: the launcher compiles native mods (mixin bundles) into a game of its own — the \"Native mods\" instance — and that game runs RustCraft mods too. A native mod's code runs unsandboxed, with your rights; the first build downloads a portable Rust and is managed from the command line.": "Expérimental : le launcher compile les mods natifs (bundles mixin) dans un jeu à part — l'instance « Native mods » — qui lance aussi les mods RustCraft. Le code d'un mod natif tourne sans sandbox, avec vos droits ; la première build télécharge un Rust portable et se gère en ligne de commande.",
+  "Installed builds": "Builds installés"
 }

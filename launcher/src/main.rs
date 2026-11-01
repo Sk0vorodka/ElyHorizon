@@ -3878,6 +3878,7 @@ impl Launcher {
             Load::Ready(r) if r.is_empty() => return page.child(centered("No releases yet.", &t)),
             Load::Ready(r) => r,
         };
+        let mut page = page;
         // A hundred releases: only the rows near the screen are drawn.
         let keep = |i: usize| {
             let tag = &releases[i].tag;
@@ -4064,6 +4065,101 @@ impl Launcher {
                 track_hover(row, id)
             },
         );
+        // Builds installed from outside the release list — a Nightly channel
+        // install, a build an older launcher caught — with no release row to
+        // carry their Remove button: listed here, or they would linger
+        // forever with no way to uninstall them.
+        let extras: Vec<String> = self
+            .installed
+            .iter()
+            .filter(|t| !releases.iter().any(|r| &r.tag == *t))
+            .cloned()
+            .collect();
+        if !extras.is_empty() {
+            page = page.child(section_title("Installed builds", "archive", &t));
+            for tag in extras {
+                let selected = self.selected() == Some(&tag);
+                let confirming = self.confirm_remove.as_ref() == Some(&tag);
+                let (use_tag, remove_tag) = (tag.clone(), tag.clone());
+                let mut right = div().flex().items_center().gap(px(4.));
+                if !selected {
+                    right = right.child(
+                        button(format!("use-{tag}"), "Use", Kind::Ghost, &t).on_click(cx.listener(
+                            move |this, _: &ClickEvent, _, cx| {
+                                this.settings.selected = Some(use_tag.clone());
+                                this.settings.save();
+                                cx.notify();
+                            },
+                        )),
+                    );
+                }
+                right = right.child(
+                    button(
+                        format!("remove-{tag}"),
+                        if confirming {
+                            "Remove for good"
+                        } else {
+                            "Remove"
+                        },
+                        if confirming {
+                            Kind::Secondary
+                        } else {
+                            Kind::Ghost
+                        },
+                        &t,
+                    )
+                    .when(confirming, |b| b.text_color(t.danger))
+                    .on_click(cx.listener(
+                        move |this, _: &ClickEvent, _, cx| {
+                            if this.confirm_remove.as_ref() == Some(&remove_tag) {
+                                this.remove(&remove_tag);
+                            } else {
+                                this.confirm_remove = Some(remove_tag.clone());
+                            }
+                            cx.notify();
+                        },
+                    )),
+                );
+                let status = if selected {
+                    Some(caps("In use").text_color(t.accent))
+                } else {
+                    Some(caps("Installed").text_color(t.ink_soft))
+                };
+                let id = SharedString::from(format!("extra-{tag}"));
+                let row = div()
+                    .id(id.clone())
+                    .relative()
+                    .flex()
+                    .items_center()
+                    .gap(px(16.))
+                    .py(px(14.))
+                    .px(px(16.))
+                    .mb(px(8.))
+                    .bg(t.panel)
+                    .border_2()
+                    .border_color(t.outline)
+                    .children(blocks::edges(t.bevel, t.lip, theme::BEVEL))
+                    .child(hover_layer(&id, t.raised, 0., 0.))
+                    .child(
+                        div()
+                            .flex()
+                            .flex_1()
+                            .min_w_0()
+                            .child(version_tag(&tag).text_color(t.ink)),
+                    )
+                    .child(
+                        div()
+                            .flex()
+                            .flex_col()
+                            .items_end()
+                            .gap(px(2.))
+                            .flex_none()
+                            .children(status)
+                            .child(right),
+                    );
+                page = page.child(track_hover(row, id));
+            }
+        }
         page.child(list)
     }
 
