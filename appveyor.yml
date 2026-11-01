@@ -23,8 +23,9 @@ build_script:
   # Only the job whose files the push touched builds; the other one finishes
   # green in seconds (its note is on the build's Messages tab). The diff is
   # against the parent commit, so a multi-commit push sees its last commit
-  # only. Documentation (these lines, docs/, site/ and any *.md) wakes no job
-  # at all; NEW BUILD in the web UI forces both.
+  # only - and so does this file (the launcher job; the client's long build
+  # waits for code pushes). Documentation (docs/, site/ and any *.md) wakes
+  # no job at all; NEW BUILD in the web UI forces both.
   - ps: |
       $ErrorActionPreference = 'Continue'
       $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
@@ -37,7 +38,7 @@ build_script:
       } else {
         $changed = @(git diff --name-only HEAD~1 HEAD 2>$null | Where-Object { $_ })
         $touched = if ($env:JOB -eq 'launcher') {
-          $changed | Where-Object { $_ -like 'launcher/*' }
+          $changed | Where-Object { $_ -like 'launcher/*' -or $_ -eq 'appveyor.yml' }
         } else {
           $changed | Where-Object {
             $_ -notlike 'launcher/*' -and
@@ -62,12 +63,20 @@ build_script:
       # line (`2>&1`), so the warnings arrive as plain output, and the exit
       # code is checked after. The client builds with its code-mods runtime
       # (`horizon-client/mods`), and with the tools a version folder ships.
-      $build = if ($env:JOB -eq 'launcher') {
+      $clean = if ($env:JOB -eq 'launcher') {
         # HORIZON_LAUNCHER_VERSION is read with option_env! at compile time:
         # cargo reuses a binary built without it unless the crate is forced
         # to recompile (the stamp then lands in --version and the
         # self-update's guard).
-        'cargo clean -p horizon-launcher --manifest-path launcher/Cargo.toml 2>&1; cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
+        'cargo clean -p horizon-launcher --manifest-path launcher/Cargo.toml 2>&1'
+      } else {
+        ''
+      }
+      if ($clean) {
+        cmd /c $clean
+      }
+      $build = if ($env:JOB -eq 'launcher') {
+        'cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
       } else {
         'cargo build --release -p horizon-client --bin horizon-client --bin horizon-ctl -p horizon-server --bin horizon-server --features horizon-client/mods 2>&1'
       }
