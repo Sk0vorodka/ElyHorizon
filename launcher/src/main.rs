@@ -3122,7 +3122,7 @@ impl Launcher {
         };
         index_row(
             n,
-            tr("Nightly builds"),
+            tr("ElyHorizon builds"),
             Some(
                 div()
                     .flex()
