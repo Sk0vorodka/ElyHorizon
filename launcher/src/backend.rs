@@ -2339,8 +2339,11 @@ pub fn self_update(release: &Release, progress: impl Fn(f32)) -> Result<(), Stri
         .clone()
         .ok_or("This launcher release has no build for this platform.")?;
     let target = launcher_version(&release.tag).unwrap_or("0");
-    if installed_launcher_version(exe_path())
-        .is_some_and(|v| v != VERSION && compare_versions(&v, target).is_ge())
+    // The file at exe_path is what persists: once it reports the target's
+    // version (or newer), the update is in — even when this process was
+    // started before it (a guard that compared against VERSION kept
+    // re-downloading a build whose stamp the replaced file already had).
+    if installed_launcher_version(exe_path()).is_some_and(|v| compare_versions(&v, target).is_ge())
     {
         progress(1.0);
         return Ok(());
