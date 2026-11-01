@@ -131,9 +131,10 @@ def main() -> None:
         ("SHA256SUMS", sums, "text/plain"),
         ("SHA256SUMS.sig", signature.encode(), "text/plain"),
     ]:
+        # Assets upload to uploads.github.com, not the API host.
         status, uploaded = api(
             "POST",
-            f"{API}/repos/{args.repo}/releases/{release['id']}/assets?name={name}",
+            f"https://uploads.github.com/repos/{args.repo}/releases/{release['id']}/assets?name={name}",
             token,
             raw=blob,
             content_type=kind,
