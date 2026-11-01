@@ -486,9 +486,9 @@ impl Game<'_> {
     /// The entities the game tracks (`entities.list` and `entities.get`):
     /// every mob and player in view, as of this tick. Collected only while a
     /// mod reads them; empty on the title screen.
-    fn mod_entities(&self) -> Arc<[horizon_mods::ModEntity]> {
+    fn mod_entities(&self) -> std::sync::Arc<[horizon_mods::ModEntity]> {
         if !self.mods.mods.wants_entities() {
-            return Arc::from([]);
+            return std::sync::Arc::from([]);
         }
         self.mobs
             .iter()
@@ -514,7 +514,7 @@ impl Game<'_> {
             return None;
         }
         let eye = self.eye_position()?;
-        let dir = view_vector(self.yaw, self.pitch);
+        let dir = super::view_vector(self.yaw, self.pitch);
         let (entity_reach, block_reach): (f64, f64) = if self.creative {
             (5.0, 5.0)
         } else {
@@ -533,9 +533,9 @@ impl Game<'_> {
                     custom_name: m.custom_name.clone(),
                 })
             });
-        let block = self.clip_ray(eye, dir, block_reach).and_then(|hit| {
-            let state = self.world.block(hit.pos[0], hit.pos[1], hit.pos[2])?;
-            Some(horizon_mods::ModBlockTarget {
+        let block = self.clip_ray(eye, dir, block_reach).map(|hit| {
+            let state = self.world.block(hit.pos[0], hit.pos[1], hit.pos[2]);
+            horizon_mods::ModBlockTarget {
                 block_x: hit.pos[0],
                 block_y: hit.pos[1],
                 block_z: hit.pos[2],
@@ -544,7 +544,7 @@ impl Game<'_> {
                     .map(|i| (hit.point[i] - eye[i]).powi(2))
                     .sum::<f64>()
                     .sqrt() as f32,
-            })
+            }
         });
         match (block, entity) {
             (Some(b), Some(e)) => {
