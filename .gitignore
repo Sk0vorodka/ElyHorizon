@@ -34,3 +34,6 @@
 
 # Release-only compiled original exporter bundle.
 /exporters/
+
+# Mod build artifacts (mods without their own .gitignore).
+mods/*/target/
