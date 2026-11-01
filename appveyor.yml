@@ -54,11 +54,12 @@ build_script:
       # their own warnings already, and cmd in between does not help — its
       # child's stderr is cmd's too. The redirection happens inside the cmd
       # line (`2>&1`), so the warnings arrive as plain output, and the exit
-      # code is checked after.
+      # code is checked after. The client builds with its code-mods runtime
+      # (`horizon-client/mods`), and with the tools a version folder ships.
       $build = if ($env:JOB -eq 'launcher') {
         'cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
       } else {
-        'cargo build --release -p horizon-client 2>&1'
+        'cargo build --release -p horizon-client --bin horizon-client --bin horizon-ctl -p horizon-server --bin horizon-server --features horizon-client/mods 2>&1'
       }
       cmd /c $build
       if ($LASTEXITCODE -ne 0) {
@@ -70,3 +71,7 @@ artifacts:
     name: horizon-launcher-windows
   - path: target\release\horizon-client.exe
     name: horizon-client-windows
+  - path: target\release\horizon-ctl.exe
+    name: horizon-ctl-windows
+  - path: target\release\horizon-server.exe
+    name: horizon-server-windows

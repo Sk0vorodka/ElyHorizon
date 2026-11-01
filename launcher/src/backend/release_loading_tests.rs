@@ -30,14 +30,14 @@ fn installed_fixture() -> Vec<String> {
 
 // The former startup paths: each decodes its own response; the update path parses games again.
 fn baseline(load: impl Fn() -> Result<serde_json::Value, String>) -> (Vec<Release>, Updates) {
-    let releases = parse_releases(&load().unwrap(), ASSET, is_game_tag);
+    let releases = parse_releases(&load().unwrap(), |n| Some(n) == ASSET, is_game_tag);
     let list = load().unwrap();
     let updates = Updates {
         horizon: horizon_update(
-            &parse_releases(&list, ASSET, is_game_tag),
+            &parse_releases(&list, |n| Some(n) == ASSET, is_game_tag),
             &installed_fixture(),
         ),
-        launcher: launcher_update(&parse_releases(&list, LAUNCHER_ASSET, is_launcher_tag)),
+        launcher: launcher_update(&parse_releases(&list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag)),
     };
     (releases, updates)
 }
@@ -47,7 +47,7 @@ fn shared(load: impl FnOnce() -> Result<serde_json::Value, String>) -> (Vec<Rele
     let updates = releases_and_updates_with(
         load,
         installed_fixture,
-        |list| parse_releases(list, LAUNCHER_ASSET, is_launcher_tag),
+        |list| parse_releases(list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag),
         |r| releases = Some(r.unwrap()),
     )
     .unwrap();
@@ -165,18 +165,22 @@ fn benchmark_shared_startup_response() {
     let concurrent_old = || {
         std::thread::scope(|scope| {
             let releases = scope.spawn(|| {
-                parse_releases(&load(Duration::from_millis(5)).unwrap(), ASSET, is_game_tag)
+                parse_releases(
+                    &load(Duration::from_millis(5)).unwrap(),
+                    |n| Some(n) == ASSET,
+                    is_game_tag,
+                )
             });
             let updates = scope.spawn(|| {
                 let list = load(Duration::from_millis(5)).unwrap();
                 Updates {
                     horizon: horizon_update(
-                        &parse_releases(&list, ASSET, is_game_tag),
+                        &parse_releases(&list, |n| Some(n) == ASSET, is_game_tag),
                         &installed_fixture(),
                     ),
                     launcher: launcher_update(&parse_releases(
                         &list,
-                        LAUNCHER_ASSET,
+                        |n| Some(n) == LAUNCHER_ASSET,
                         is_launcher_tag,
                     )),
                 }

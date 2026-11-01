@@ -60,7 +60,7 @@ pub fn latest() -> Result<Option<Release>, String> {
 
 fn parse(release: &serde_json::Value) -> Option<Release> {
     let list = serde_json::Value::Array(vec![release.clone()]);
-    backend::parse_releases(&list, ASSET, |tag| tag == NIGHTLY)
+    backend::parse_releases(&list, backend::is_ely_client_asset, |tag| tag == NIGHTLY)
         .into_iter()
         .next()
         .filter(|r| r.prerelease)
@@ -75,8 +75,14 @@ pub fn update(latest: Option<Release>, installed: &[String]) -> Option<Release> 
 /// it (making the instance the first time) and removes older nightly versions. Returns the
 /// instance.
 pub fn install(release: &Release, progress: impl Fn(f32)) -> Result<Instance, String> {
+    // The digest is looked up under the release's own asset name: the fork's
+    // nightly archives are stamped (ElyHorizonClient-x64-<build>.zip).
+    let (asset_name, _) = release
+        .asset
+        .clone()
+        .ok_or_else(|| format!("{} has no build for this platform.", release.tag))?;
     let sha256 = crate::signed::nightly_digest(
-        ASSET.unwrap_or_default(),
+        &asset_name,
         &horizon_release_sign::trusted_keys(),
         backend::fetch_small,
     )?;

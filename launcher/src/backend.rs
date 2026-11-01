@@ -57,6 +57,12 @@ pub const ASSET: Option<&str> = Some("horizon-windows-x64.zip");
 )))]
 pub const ASSET: Option<&str> = None;
 
+/// The fork's nightly build's client archive: `ElyHorizonClient-x64-<build>.zip` (other
+/// platforms carry none yet, so the Nightly channel says "no build for this platform").
+pub fn is_ely_client_asset(name: &str) -> bool {
+    name.starts_with("ElyHorizonClient-x64-") && name.ends_with(".zip")
+}
+
 #[cfg(all(target_os = "linux", target_arch = "x86_64"))]
 pub const LAUNCHER_ASSET: Option<&str> = Some("horizon-launcher-linux-x86_64.tar.gz");
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
@@ -243,7 +249,7 @@ fn release_list() -> Result<serde_json::Value, String> {
 /// The releases in `list` whose tag passes `keep`, newest first, with the asset named `asset`.
 pub(crate) fn parse_releases(
     list: &serde_json::Value,
-    asset: Option<&str>,
+    asset: impl Fn(&str) -> bool,
     keep: fn(&str) -> bool,
 ) -> Vec<Release> {
     let mut out = Vec::new();
@@ -253,7 +259,7 @@ pub(crate) fn parse_releases(
             continue;
         }
         let found = r["assets"].as_array().into_iter().flatten().find_map(|a| {
-            (Some(a["name"].as_str()?) == asset).then(|| {
+            asset(a["name"].as_str()?).then(|| {
                 Some((
                     a["browser_download_url"].as_str()?.to_string(),
                     a["size"].as_u64()?,
@@ -285,7 +291,11 @@ fn is_launcher_tag(tag: &str) -> bool {
 /// Published Horizon releases, newest first. Drafts never reach the anonymous API, and launcher
 /// releases are left out.
 pub fn releases() -> Result<Vec<Release>, String> {
-    Ok(parse_releases(&release_list()?, ASSET, is_game_tag))
+    Ok(parse_releases(
+        &release_list()?,
+        |n| Some(n) == ASSET,
+        is_game_tag,
+    ))
 }
 
 /// The launcher releases in `list` (the newest 100 releases). Game releases come out several times
@@ -302,7 +312,7 @@ fn launcher_releases_in_with(
     list: &serde_json::Value,
     json: impl Fn(String) -> Result<serde_json::Value, String>,
 ) -> Vec<Release> {
-    let found = parse_releases(list, LAUNCHER_ASSET, is_launcher_tag);
+    let found = parse_releases(list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag);
     if found.iter().any(|r| r.asset.is_some()) {
         return found;
     }
@@ -320,7 +330,7 @@ fn launcher_releases_in_with(
         if let Ok(release) = json(format!("{api}/releases/tags/{tag}")) {
             let one = parse_releases(
                 &serde_json::json!([release]),
-                LAUNCHER_ASSET,
+                |n| Some(n) == LAUNCHER_ASSET,
                 is_launcher_tag,
             );
             if one.iter().any(|r| r.asset.is_some()) {
@@ -2100,7 +2110,7 @@ fn releases_and_updates_with(
             return Err(e);
         }
     };
-    let releases = parse_releases(&list, ASSET, is_game_tag);
+    let releases = parse_releases(&list, |n| Some(n) == ASSET, is_game_tag);
     let horizon = horizon_update(&installable_updates(&releases), &installed());
     on_releases(Ok(releases));
     Ok(Updates {
@@ -2966,12 +2976,12 @@ mod tests {
             {"tag_name": "v2026.10.13", "assets": []},
             {"tag_name": "launcher-v0.0.1", "draft": true, "assets": []},
         ]);
-        let game: Vec<_> = parse_releases(&list, ASSET, is_game_tag)
+        let game: Vec<_> = parse_releases(&list, |n| Some(n) == ASSET, is_game_tag)
             .into_iter()
             .map(|r| r.tag)
             .collect();
         assert_eq!(game, ["v2026.10.13", "v2026.10.12"]);
-        let launcher: Vec<_> = parse_releases(&list, LAUNCHER_ASSET, is_launcher_tag)
+        let launcher: Vec<_> = parse_releases(&list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag)
             .into_iter()
             .map(|r| r.tag)
             .collect();
@@ -2988,7 +2998,7 @@ mod tests {
             {"tag_name": "v2026.10.15", "assets": [{"name": asset, "browser_download_url": "good", "size": 1}]},
             {"tag_name": "v2026.10.14", "assets": [{"name": asset, "browser_download_url": "old", "size": 1}]},
         ]);
-        let releases = parse_releases(&list, Some(asset), is_game_tag);
+        let releases = parse_releases(&list, |name| Some(name) == Some(asset), is_game_tag);
         assert!(releases.iter().all(|r| r.tag != "v2026.10.15.1"));
         assert_eq!(
             latest(&releases).map(|r| r.tag.as_str()),
@@ -3015,7 +3025,7 @@ mod tests {
             {"tag_name": "v0.2.12", "prerelease": true, "assets": [{"name": asset, "browser_download_url": "a", "size": 1}]},
             {"tag_name": "v0.2.0", "assets": [{"name": asset, "browser_download_url": "s", "size": 1}]},
         ]);
-        let releases = parse_releases(&list, Some(asset), is_game_tag);
+        let releases = parse_releases(&list, |name| Some(name) == Some(asset), is_game_tag);
         assert_eq!(
             releases.iter().map(|r| r.prerelease).collect::<Vec<_>>(),
             [false, true, false]
@@ -3248,7 +3258,7 @@ mod tests {
             {"tag_name": "v2026.10.21", "prerelease": true, "assets": [{"name": asset, "browser_download_url": "d", "size": 1}]},
             {"tag_name": "v2026.10.19.15", "assets": [{"name": asset, "browser_download_url": "s", "size": 1}]},
         ]);
-        let releases = parse_releases(&list, Some(asset), is_game_tag);
+        let releases = parse_releases(&list, |name| Some(name) == Some(asset), is_game_tag);
         let installed = ["v2026.10.19.15".to_string(), "v2026.10.12".to_string()];
         // A pre-release 0.2.0 is not an update; once published as the release, it is one.
         let offered = |releases: &[Release]| {
