@@ -3007,6 +3007,7 @@ impl Launcher {
                         &t,
                     ))
                     .child(self.nightly_row(n + 2, cx))
+                    .child(self.mod_loader_row(n + 3, cx))
                     .child(group("Launcher", "monitor"))
                     .child(index_row(
                         n + 3,
@@ -3451,6 +3452,46 @@ impl Launcher {
         n += 1;
         rows = rows.child(self.elyby_row(n, cx));
         (rows, n)
+    }
+
+    /// Settings' Mod loader row: RustCraft's sandboxed mods alone, or beside
+    /// them the native mods, which the launcher compiles into their own game.
+    fn mod_loader_row(&mut self, n: usize, cx: &mut Context<Self>) -> Div {
+        let t = self.theme;
+        let loader = segments(
+            "mod-loader",
+            &[
+                (backend::ModLoader::Rustcraft, "RustCraft"),
+                (backend::ModLoader::WithNative, "RustCraft + Native"),
+            ],
+            self.settings.mod_loader,
+            &t,
+            {
+                let this = cx.entity().downgrade();
+                move |choice, _window, cx| {
+                    let _ = this.update(cx, |this, cx| {
+                        this.settings.mod_loader = choice;
+                        this.settings.save();
+                        cx.notify();
+                    });
+                }
+            },
+        );
+        let detail = match self.settings.mod_loader {
+            backend::ModLoader::Rustcraft => tr(
+                "The installed versions run RustCraft mods: sandboxed `.hmod`s whose permissions the Mods page shows.",
+            ),
+            backend::ModLoader::WithNative => tr(
+                "Experimental: the launcher compiles native mods (mixin bundles) into a game of its own — the \"Native mods\" instance — and that game runs RustCraft mods too. A native mod's code runs unsandboxed, with your rights; the first build downloads a portable Rust and is managed from the command line.",
+            ),
+        };
+        index_row(
+            n,
+            tr("Mod loader"),
+            Some(div().child(detail).into_any_element()),
+            Some(loader.into_any_element()),
+            &t,
+        )
     }
 
     /// Settings' Accounts: the ely.by sign-in. Ely.by is an alternative account service

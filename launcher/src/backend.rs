@@ -2586,6 +2586,18 @@ pub enum Appearance {
     System,
 }
 
+/// Which mod loaders the launcher offers: RustCraft's sandboxed `.hmod`s
+/// alone, or beside them the native mods (experimental: mixin bundles the
+/// launcher compiles into a game of its own — an instance whose game runs
+/// RustCraft mods too).
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum ModLoader {
+    #[default]
+    Rustcraft,
+    WithNative,
+}
+
 /// What the launcher's window does while the game runs, as the player picks it in Settings.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "lowercase")]
@@ -2661,6 +2673,10 @@ pub struct Settings {
     /// Dark, Light, or the system's: the launcher's look. Dark by default.
     #[serde(default)]
     pub appearance: Appearance,
+    /// RustCraft mods alone, or beside them the native mods
+    /// ([`ModLoader::WithNative`], experimental). RustCraft by default.
+    #[serde(default)]
+    pub mod_loader: ModLoader,
     /// The player has read what the "I'm playing" ping holds (`telemetry::PING`): on the
     /// first-run question, or on the Play page once if they answered that before it existed.
     #[serde(default)]
@@ -2981,10 +2997,11 @@ mod tests {
             .map(|r| r.tag)
             .collect();
         assert_eq!(game, ["v2026.10.13", "v2026.10.12"]);
-        let launcher: Vec<_> = parse_releases(&list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag)
-            .into_iter()
-            .map(|r| r.tag)
-            .collect();
+        let launcher: Vec<_> =
+            parse_releases(&list, |n| Some(n) == LAUNCHER_ASSET, is_launcher_tag)
+                .into_iter()
+                .map(|r| r.tag)
+                .collect();
         assert_eq!(launcher, ["launcher-v9.0.0"]);
     }
 

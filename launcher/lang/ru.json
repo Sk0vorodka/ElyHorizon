@@ -189,5 +189,10 @@
   "Download and prepare": "Скачать и подготовить",
   "Not prepared. Horizon can download Minecraft {version} from Mojang for your account, or use your own install.": "Не подготовлено. Horizon может скачать Minecraft {version} у Mojang для вашего аккаунта или взять вашу установку.",
   "Not prepared. Sign in with the Microsoft account that owns Minecraft {version} first.": "Не подготовлено. Сначала войдите в аккаунт Microsoft, у которого есть Minecraft {version}.",
-  "Cancel": "Отмена"
+  "Cancel": "Отмена",
+  "Mod loader": "Загрузчик модов",
+  "RustCraft": "RustCraft",
+  "RustCraft + Native": "RustCraft + Native",
+  "The installed versions run RustCraft mods: sandboxed `.hmod`s whose permissions the Mods page shows.": "Установленные версии запускают моды RustCraft: песочница `.hmod` с разрешениями на странице Mods.",
+  "Experimental: the launcher compiles native mods (mixin bundles) into a game of its own — the \"Native mods\" instance — and that game runs RustCraft mods too. A native mod's code runs unsandboxed, with your rights; the first build downloads a portable Rust and is managed from the command line.": "Экспериментально: лаунчер компилирует нативные моды (mixin-бандлы) в собственную игру — инстанс «Native mods» — и в ней же работают моды RustCraft. Код нативного мода исполняется без песочницы, с вашими правами; первая сборка скачает портативный Rust и управляется из командной строки."
 }
