@@ -4,9 +4,11 @@ build: off
 test: off
 
 cache:
-  - '%USERPROFILE%\.cargo\registry -> appveyor.yml'
-  - launcher\target -> appveyor.yml
-  - target -> appveyor.yml
+  # Keyed on the lockfiles, not on this file: a CI-config edit must not throw
+  # a 40-minute build away. The caches re-key only when dependencies change.
+  - '%USERPROFILE%\.cargo\registry -> Cargo.lock'
+  - launcher\target -> launcher\Cargo.lock
+  - target -> Cargo.lock
 
 environment:
   matrix:
