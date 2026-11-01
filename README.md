@@ -1,44 +1,74 @@
 <p align="center">
-  <img src="docs/media/banner.webp" alt="Horizon: Minecraft: Java Edition 26.3, rewritten in Rust and checked against vanilla by 281 differential harnesses" width="100%">
+  <img src="docs/media/banner.webp" alt="ElyHorizon: Horizon — Minecraft: Java Edition 26.3 rewritten in Rust — with ely.by accounts" width="100%">
 </p>
 
 <p align="center">
-  <a href="https://github.com/horizon-rust/horizon/actions/workflows/ci.yml"><img src="https://github.com/horizon-rust/horizon/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI"></a>
+  <a href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon"><img src="https://ci.appveyor.com/api/projects/status/Sk0vorodka/elyhorizon/branch/feat/elyby?svg=true" alt="Build"></a>
   <img src="https://img.shields.io/badge/Minecraft-Java%2026.3-5D9C3F" alt="Minecraft Java 26.3">
   <img src="https://img.shields.io/badge/Rust-stable-B7410E?logo=rust&logoColor=white" alt="Rust">
-  <img src="https://img.shields.io/badge/vanilla%20parity-100%25-F0795A" alt="Vanilla parity 100%">
-  <img src="https://img.shields.io/badge/platform-Linux%20%7C%20macOS%20%7C%20Windows-2A2470" alt="Linux, macOS and Windows">
+  <img src="https://img.shields.io/badge/accounts-ely.by-3C8CFF" alt="ely.by accounts">
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20Linux%20%7C%20macOS-2A2470" alt="Linux, macOS and Windows">
   <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-3B2F7E" alt="MIT license"></a>
 </p>
 
 <p align="center">
-  <a href="https://playhorizon.dev"><b>Website</b></a> ·
   <a href="#download"><b>Download</b></a> ·
+  <a href="#what-this-fork-adds"><b>ely.by</b></a> ·
+  <a href="#making-a-mod"><b>Mods</b></a> ·
   <a href="https://playhorizon.dev/docs/"><b>Documentation</b></a> ·
-  <a href="https://github.com/horizon-rust/horizon/releases"><b>Release notes</b></a> ·
-  <a href="ROADMAP.md"><b>Roadmap</b></a> ·
   <a href="#project-status"><b>Project status</b></a> ·
-  <a href="#contributing"><b>Contributing</b></a>
+  <a href="#credits"><b>Credits</b></a>
 </p>
 
-# Horizon
+# ElyHorizon
 
-Horizon is Minecraft: Java Edition 26.3 rewritten in Rust: a native game that reads the same worlds, follows the same rules and generates the same terrain as the Java game, and is checked against it by 281 differential harnesses. You play it through a small launcher, on the files from your own copy of Minecraft. It is free, open source and unofficial.
+ElyHorizon is a fork of [Horizon](https://github.com/horizon-rust/horizon) — Minecraft: Java Edition 26.3 rewritten in Rust — that plays with **[ely.by](https://ely.by) accounts**: no Microsoft account needed. You sign in to the launcher with your ely.by profile (password and two-factor code, or OAuth in the browser), the game joins servers with it, and your ely.by skin shows in the world.
 
-> Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. Horizon contains no Minecraft code, assets or data: you need your own legally obtained copy of Minecraft: Java Edition 26.3.
+Everything Horizon is, this fork is too: a native game that reads the same worlds, follows the same rules and generates the same terrain as the Java game, checked against it by 281 differential harnesses. Free, open source and unofficial.
+
+> Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. ElyHorizon contains no Minecraft code, assets or data: you need your own legally obtained copy of Minecraft: Java Edition 26.3. ely.by is an independent account service, not affiliated with Mojang.
+
+## What this fork adds
+
+- **ely.by sign-in, two ways.** In the launcher's account form: your ely.by e-mail and password (two-factor accounts ask for the 6-digit code), or **Sign in with browser** — an OAuth page at account.ely.by, with the launcher catching the callback locally.
+- **Your ely.by skin in the game.** The launcher carries the skin through the session file, so the client draws it without reaching ely.by at play time; accounts signed in before the skin fetch worked heal themselves on the next launch.
+- **Online play as an ely.by player.** Online-mode servers that accept ely.by sessions (authlib-injector servers, Horizon's own server) and every offline-mode server, including Open to LAN with a friend on the Java game.
+- **Everything upstream:** the launcher, the mod system, the server, the agent control, the parity work. See the sections below.
+
+The ely.by sign-in and the skins live in the launcher (`launcher/src/account/`): the Yggdrasil authenticate flow against `authserver.ely.by` and the OAuth2 flow against `account.ely.by`, with the skin fetched from the authserver's profile API.
 
 ## Download
 
-Horizon is installed through **the Horizon launcher**. Get it from [playhorizon.dev](https://playhorizon.dev) (the Download button picks your system) or from [the launcher releases](https://github.com/horizon-rust/horizon/releases?q=launcher-v&expanded=true), for Linux x86-64, macOS on Apple Silicon or Windows x64. The launcher installs and updates the game, prepares its files from your own copy of Minecraft, and updates itself.
+Windows builds of both binaries are made on [AppVeyor](https://ci.appveyor.com/project/Sk0vorodka/elyhorizon) for every push to `feat/elyby`: open the latest build's **Artifacts** tab and take `horizon-launcher.exe` and `horizon-client.exe`. The launcher installs and updates the game, prepares its files from your own copy of Minecraft, and signs you in.
 
-**You need** a Microsoft account that owns Minecraft: Java Edition (the launcher signs in with it, as other launchers do; see [Microsoft account](docs/microsoft-account.md)); Minecraft: Java Edition 26.3, played once (the official launcher, Prism, MultiMC and other launchers all work); a Java 25 runtime, for the one-time preparation; and a GPU with Vulkan on Linux and Windows, or any Apple Silicon Mac. Step by step, with macOS's first-open prompt and the first launch: [Install and first launch](https://playhorizon.dev/docs/install).
+**You need** an [ely.by](https://ely.by) account (make one at [account.ely.by/register](https://account.ely.by/register)) or a Microsoft account that owns Minecraft: Java Edition; Minecraft: Java Edition 26.3, played once (the official launcher, Prism, MultiMC and other launchers all work); a Java 25 runtime, for the one-time preparation; and a GPU with Vulkan.
 
-<table>
-  <tr>
-    <td width="50%"><img src="docs/media/launcher-play.webp" alt="The launcher's Play page: a version ready to play, its summary, Client and Server, the version picker and Play"></td>
-    <td width="50%"><img src="docs/media/launcher-patch-notes.webp" alt="The launcher's Patch notes page"></td>
-  </tr>
-</table>
+## Making a mod
+
+Horizon's mod system (Rust compiled to sandboxed WebAssembly — Java mod jars do not run) carries over untouched, and this fork builds on it. A mod is a `cdylib` crate against [the SDK](crates/horizon-mod-sdk):
+
+```rust
+use horizon_mod_sdk::{Mod, Registration, entities, game, hud::{self, Corner, Line}};
+
+struct Radar;
+impl Mod for Radar {
+    fn init() -> Result<(Self, Registration), String> {
+        Ok((Radar, Registration::new().on_tick()))
+    }
+    fn tick(&mut self, _tick: u64) {
+        let Some(_player) = game::get_player() else { return };
+        if let Some(near) = entities::list(32.0) {
+            hud::set_panel(Corner::TopRight, &[Line {
+                text: format!("{} entities nearby", near.len()),
+                color: 0xFFFFFF,
+            }]);
+        }
+    }
+}
+horizon_mod_sdk::export_mod!(Radar);
+```
+
+The SDK's capabilities cover HUD panels and shapes, a minimap, zoom, mod-owned screens with widgets, the entities and the crosshair target around the player, recipes with a recipe-viewer panel, input and storage. Worked examples live in [crates/horizon-mod-sdk/examples](crates/horizon-mod-sdk/examples) (`entity-radar`, `crosshair-hud`, `coords-hud` and more); the contract is [`crates/horizon-mod-sdk/wit/horizon.wit`](crates/horizon-mod-sdk/wit/horizon.wit). See [Mods and data packs](https://playhorizon.dev/docs/mods).
 
 ## What works today
 
@@ -47,47 +77,11 @@ The [documentation](https://playhorizon.dev/docs/) covers each of these.
 - **The game:** singleplayer with vanilla's world generation, mobs, villagers, raids, redstone, every command, the HUD and the recipe book, on saves in vanilla's format. Worlds from 1.8 to 26.2 are upgraded as vanilla does. [Status table](#project-status).
 - **Horizon's own extras:** new menus (vanilla's are one setting away), graphics presets, distant terrain up to 1024 chunks, controller support, optional zoom, minimap and more, all off by default where they would change the vanilla look. See [Settings](https://playhorizon.dev/docs/settings).
 - **Resource packs and data packs:** resource packs work, and data packs load functions, predicates and item modifiers.
-- **Playing with others:** invite friends from the pause menu's Friends button with a code, Open to LAN, and joining servers, online-mode ones with the Microsoft account the launcher signs in with. See [Multiplayer](https://playhorizon.dev/docs/multiplayer).
-- **Mods:** Horizon has its own mod system (Rust compiled to WebAssembly). Java mod jars do not run. See [Mods and data packs](https://playhorizon.dev/docs/mods).
-
-Screenshots, captured in the Rust client itself with vanilla assets and no mods or shaders:
-
-<table>
-  <tr>
-    <td colspan="2"><img src="docs/media/sunset.webp" alt="Sunset over a savanna river valley and a plains village"></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/media/survival.webp" alt="Survival at dusk: a zombie walks up, with the hotbar, health, hunger and experience"></td>
-    <td width="50%"><img src="docs/media/settings.webp" alt="Vanilla's Video Settings screen with Horizon's own buttons at the top: Horizon Graphics and Advanced Graphics"></td>
-  </tr>
-  <tr>
-    <td width="50%"><img src="docs/media/village.webp" alt="A plains village among savanna hills, with farms, villagers and an iron golem"></td>
-    <td width="50%"><img src="docs/media/nether.webp" alt="A crimson forest in the Nether with a zombified piglin"></td>
-  </tr>
-</table>
+- **Playing with others:** invite friends from the pause menu's Friends button with a code, Open to LAN, and joining servers — online-mode ones with the ely.by or Microsoft account the launcher signs in with. See [Multiplayer](https://playhorizon.dev/docs/multiplayer).
 
 ## Host a server
 
 The launcher's **Servers** page creates, starts, backs up and updates a Horizon server with buttons, and invites friends over Tailscale. On a VPS, `horizon-server` installs with one command and runs without Java. Guide: [Host a server](https://playhorizon.dev/docs/hosting) ([reference](docs/hosting.md)).
-
-## Modpacks
-
-The launcher's **Modpacks** page imports a Modrinth or CurseForge pack, shows which of its mods Horizon can carry over, and plays the ones it can as their own profile. Today that means content mods made of data and assets; mods with Java code are not ported yet. See [Modpacks](https://playhorizon.dev/docs/modpacks).
-
-## Agent control
-
-AI agents and scripts can play Horizon. `horizon-ctl`, shipped beside the game in every release folder, is a command line that reads the game as JSON and acts like a player; `horizon-ctl mcp` serves the same commands as an MCP server (one tool per command, screenshots returned as images).
-
-```sh
-horizon-ctl launch --world Survival --seed 5 --wait   # finds the version the launcher installed
-horizon-ctl state                                       # position, health, food, target, screen...
-horizon-ctl find-block birch_log                        # the nearest logs
-horizon-ctl goto -0.5 65 -2.5 --near 2.5                # walks there along a path
-horizon-ctl break -1 65 -3                              # mines it; replies with the drops
-horizon-ctl open-inventory && horizon-ctl click-slot 0  # menus: slots, buttons by label, text fields
-```
-
-Commands block until the action is done and reply with what happened; errors are JSON with distinct exit codes, `horizon-ctl help` lists every command and `horizon-ctl COMMAND --help` explains one with examples. It talks to the game over a Unix socket on Linux and macOS and over a token-protected localhost port on Windows. See [Agent control in the native client guide](docs/native-client.md#agent-control-horizon-ctl-and-mcp).
 
 ## Build from source
 
@@ -99,8 +93,8 @@ Horizon contains no game files and never downloads them. It builds its resources
 2. **Server jar:** the 26.3 server jar, from the `downloads.server.url` in your launcher's `versions/26.3/26.3.json` (or [minecraft.net/download/server](https://www.minecraft.net/en-us/download/server) while 26.3 is the current release). Pass it with `--server-jar` or set `HORIZON_SERVER_JAR`. It is only needed the first time.
 
 ```sh
-git clone https://github.com/horizon-rust/horizon.git
-cd horizon
+git clone https://github.com/Sk0vorodka/ElyHorizon.git
+cd ElyHorizon
 cargo run --release -p horizon-prepare -- --prepare --server-jar ~/Downloads/server.jar   # needs JDK 25
 cargo run --release -p horizon-prepare -- sounds   # optional: sounds from your launcher install
 cargo run --release -p horizon-client
@@ -110,34 +104,13 @@ Everything prepared lands in the gitignored `.local/`. It is derived from the ga
 
 The client starts on the title screen. Command-line options (`--world`, `--seed`, `--creative`, `--render-distance`, `--dedicated`), controls, scripting through `horizon-ctl` and the architecture are described in [the native client guide](docs/native-client.md). The rest of the developer documentation is indexed in [docs/README.md](docs/README.md), including [the parity workflow](docs/parity-workflow.md).
 
-## Roadmap
-
-What is being done now, what comes next and where you can help, in plain words and in technical detail: [ROADMAP.md](ROADMAP.md). [playhorizon.dev/hub](https://playhorizon.dev/hub) shows it with the work board, the journal of what shipped and how to help.
-
-## Contributing
-
-Issues and pull requests are welcome: see [CONTRIBUTING.md](CONTRIBUTING.md) for how we work (vanilla first, small pull requests, labels), or [the contributing guide](https://playhorizon.dev/docs/contributing) on the site. Questions and ideas: [Discord](https://discord.gg/HcTeMZxe5E). Before opening a pull request, run the self-check and paste the block it prints:
-
-```sh
-git config core.hooksPath .githooks
-python3 tools/pr_ready.py
-```
-
-It runs rustfmt, clippy with warnings denied, the tests of the crates you touched, the Python tests, the public-tree check, and the vanilla harnesses your change can affect. CI runs the same checks on GitHub's Linux runners; the vanilla harnesses need the game, which Horizon never downloads, so they run on a maintainer's computer holding their own copy. Never commit game files, decompiled source or prepared resources: `tools/check_public_tree.py` rejects them, and tracked Java is allowed only under the project's own `dev/horizonlab` namespace.
-
 ## Project status
 
-The table below is the project's own audit of each subsystem. Every subsystem now matches vanilla in every harness that compares it. 100% means 100% of what the harnesses compare, not proof that nothing else differs. The remaining known differences are listed below.
+The table below is the upstream project's own audit of each subsystem. Every subsystem now matches vanilla in every harness that compares it. 100% means 100% of what the harnesses compare, not proof that nothing else differs.
 
 ### Java parity: 100%
 
-Each subsystem scores 0 (absent), 0.25 (started, not playable), 0.5 (playable,
-major vanilla features missing), 0.75 (playable, mostly complete) or 1 (complete
-and verified against vanilla by differential tests). The percentage is the
-average; `tests/test_parity.py` keeps it in sync with this table. Last audited
-2026-10-13 against the harness results: all 281 harnesses pass on Linux, each
-rerun whenever one of its inputs changed, and the Mac mini now runs every one of
-them too (Rust uses Java's own float maths on each platform).
+Each subsystem scores 0 (absent), 0.25 (started, not playable), 0.5 (playable, major vanilla features missing), 0.75 (playable, mostly complete) or 1 (complete and verified against vanilla by differential tests). The percentage is the average; `tests/test_parity.py` keeps it in sync with this table. Last audited 2026-10-13 against the harness results: all 281 harnesses pass on Linux, each rerun whenever one of its inputs changed, and the Mac mini now runs every one of them too (Rust uses Java's own float maths on each platform).
 
 | Subsystem | Score | Main gaps |
 | --- | ---: | --- |
@@ -166,6 +139,6 @@ Skins served over https show the default skin unless already cached; pack icons 
 
 Third-party credits and licenses: [Third-party notices](THIRD_PARTY_NOTICES.md).
 
-## Author
+## Credits
 
-Made by [Ludovic Marie](https://lu4ovic.com) ([@ludovic111](https://github.com/ludovic111)).
+ElyHorizon is a fork of [Horizon](https://github.com/horizon-rust/horizon) by [Ludovic Marie](https://lu4ovic.com) ([@ludovic111](https://github.com/ludovic111)) — the engine, the launcher and the mod system are the upstream project's work; this fork's own work is the ely.by integration, its documentation and its builds. Accounts: [ely.by](https://ely.by), an independent Minecraft account service.

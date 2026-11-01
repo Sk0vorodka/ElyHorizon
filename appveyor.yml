@@ -21,8 +21,8 @@ build_script:
   # Only the job whose files the push touched builds; the other one finishes
   # green in seconds (its note is on the build's Messages tab). The diff is
   # against the parent commit, so a multi-commit push sees its last commit
-  # only. A push that only changes this file wakes no job at all; NEW BUILD
-  # in the web UI forces both.
+  # only. Documentation (these lines, docs/, site/ and any *.md) wakes no job
+  # at all; NEW BUILD in the web UI forces both.
   - ps: |
       $ErrorActionPreference = 'Continue'
       $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
@@ -33,7 +33,13 @@ build_script:
         $touched = if ($env:JOB -eq 'launcher') {
           $changed | Where-Object { $_ -like 'launcher/*' }
         } else {
-          $changed | Where-Object { $_ -notlike 'launcher/*' -and $_ -notlike 'appveyor.yml' }
+          $changed | Where-Object {
+            $_ -notlike 'launcher/*' -and
+            $_ -notlike 'appveyor.yml' -and
+            $_ -notlike 'docs/*' -and
+            $_ -notlike 'site/*' -and
+            $_ -notlike '*.md'
+          }
         }
         if (-not $touched) {
           Write-Host "Skipped: nothing changed for JOB=$($env:JOB)."

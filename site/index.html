@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ElyHorizon — Minecraft in Rust, with ely.by accounts</title>
+<meta name="description" content="ElyHorizon: a fork of Horizon — Minecraft: Java Edition rewritten in Rust — that plays with ely.by accounts: sign in without a Microsoft account, keep your ely.by skin, and mod the game with sandboxed Rust mods.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --dirt-dark: #1d1610;
+    --dirt: #3a2a1a;
+    --stone: #6b6b6b;
+    --stone-dark: #4a4a4a;
+    --panel: #2b2b2b;
+    --panel-edge-light: #6f6f6f;
+    --panel-edge-dark: #141414;
+    --grass: #5d9c3f;
+    --grass-dark: #3e6b29;
+    --grass-light: #86c85f;
+    --ely: #3c8cff;
+    --gold: #f5c542;
+    --ink: #e8e8e8;
+    --muted: #a8a8a8;
+    --pixel: "Press Start 2P", monospace;
+    --body: "VT323", monospace;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    margin: 0;
+    color: var(--ink);
+    background-color: var(--dirt-dark);
+    /* A hand-made "dirt" texture: layered gradients, no images. */
+    background-image:
+      radial-gradient(circle at 17% 23%, rgba(122, 85, 51, .35) 0 2px, transparent 3px),
+      radial-gradient(circle at 63% 71%, rgba(90, 62, 38, .35) 0 2px, transparent 3px),
+      radial-gradient(circle at 41% 87%, rgba(140, 100, 60, .25) 0 1px, transparent 2px),
+      radial-gradient(circle at 83% 9%, rgba(70, 48, 30, .4) 0 2px, transparent 3px),
+      linear-gradient(180deg, #241a10, #1d1610);
+    background-size: 96px 96px, 96px 96px, 48px 48px, 64px 64px, auto;
+    font-family: var(--body);
+    font-size: 22px;
+    line-height: 1.45;
+  }
+
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 0 20px; }
+
+  a { color: var(--grass-light); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  h1, h2, h3 { font-family: var(--pixel); font-weight: 400; line-height: 1.35; }
+
+  h2 {
+    font-size: 20px;
+    color: var(--gold);
+    text-shadow: 2px 2px 0 #000;
+    margin: 56px 0 18px;
+  }
+  h2::before { content: "■ "; color: var(--grass); }
+
+  /* The classic Minecraft button: a bevel, a press. */
+  .btn {
+    display: inline-block;
+    font-family: var(--pixel);
+    font-size: 13px;
+    text-decoration: none;
+    color: #fff;
+    text-shadow: 2px 2px 0 rgba(0, 0, 0, .6);
+    padding: 15px 22px;
+    background: linear-gradient(180deg, var(--grass-light), var(--grass) 55%, var(--grass-dark));
+    border: 2px solid #000;
+    box-shadow: inset 2px 2px 0 rgba(255, 255, 255, .45), inset -2px -3px 0 rgba(0, 0, 0, .45);
+    cursor: pointer;
+  }
+  .btn:hover { filter: brightness(1.12); text-decoration: none; }
+  .btn:active { box-shadow: inset -2px -2px 0 rgba(255, 255, 255, .3), inset 2px 3px 0 rgba(0, 0, 0, .45); }
+  .btn.grey {
+    background: linear-gradient(180deg, #8f8f8f, var(--stone) 55%, var(--stone-dark));
+  }
+
+  /* A panel like the game's tooltips: dark inside, light and dark edges. */
+  .panel {
+    background: rgba(20, 20, 24, .88);
+    border: 2px solid #000;
+    box-shadow: inset 2px 2px 0 var(--panel-edge-light), inset -2px -2px 0 var(--panel-edge-dark);
+    padding: 20px 22px;
+  }
+
+  header.site {
+    padding: 14px 0;
+    border-bottom: 2px solid rgba(0, 0, 0, .55);
+    background: rgba(0, 0, 0, .35);
+  }
+  header.site .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+  .logo { font-family: var(--pixel); font-size: 15px; color: #fff; text-shadow: 2px 2px 0 #000; }
+  .logo span { color: var(--grass-light); }
+  nav.site a { font-family: var(--pixel); font-size: 10px; color: var(--muted); margin-left: 18px; }
+  nav.site a:hover { color: #fff; text-decoration: none; }
+
+  .hero { text-align: center; padding: 92px 0 64px; }
+  .hero h1 {
+    font-size: clamp(26px, 6vw, 46px);
+    margin: 0 0 10px;
+    color: #fff;
+    text-shadow: 3px 3px 0 #000, 6px 6px 0 rgba(0, 0, 0, .35);
+  }
+  .hero h1 .ely { color: var(--ely); text-shadow: 3px 3px 0 #000, -1px -1px 0 #000, 6px 6px 0 rgba(0, 0, 0, .35); }
+  .hero h1 .hz { color: var(--grass-light); }
+  .hero p.tag { font-size: 26px; color: var(--ink); margin: 0 auto 30px; max-width: 760px; }
+  .hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .hero .small { margin-top: 18px; font-size: 19px; color: var(--muted); }
+
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 16px; }
+  .card h3 { font-size: 12px; color: var(--grass-light); margin: 0 0 12px; }
+  .card p { margin: 0; color: var(--ink); }
+  .card .icon { font-size: 30px; line-height: 1; margin-bottom: 12px; }
+
+  .downloads { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+  .downloads .panel h3 { font-family: var(--pixel); font-size: 12px; margin: 0 0 8px; color: #fff; }
+  .downloads .panel p { margin: 0 0 16px; color: var(--muted); }
+  .downloads .file {
+    font-family: var(--pixel); font-size: 9px; color: var(--gold);
+    display: block; margin-top: 12px; word-break: break-all;
+  }
+
+  pre.code {
+    background: #0d0d11;
+    border: 2px solid #000;
+    box-shadow: inset 2px 2px 0 #26262c, inset -2px -2px 0 #101014;
+    padding: 18px 20px;
+    overflow: auto;
+    font-size: 19px;
+    line-height: 1.4;
+    color: #cde3c1;
+  }
+  pre.code .k { color: #86c85f; }
+  pre.code .s { color: #f5c542; }
+  pre.code .c { color: #7d8a75; }
+
+  ul.check { list-style: none; padding: 0; margin: 0; }
+  ul.check li { padding-left: 30px; position: relative; margin: 8px 0; }
+  ul.check li::before { content: "✔"; position: absolute; left: 0; color: var(--grass-light); }
+
+  footer.site {
+    margin-top: 72px;
+    padding: 26px 0 34px;
+    border-top: 2px solid rgba(0, 0, 0, .55);
+    background: rgba(0, 0, 0, .35);
+    color: var(--muted);
+    font-size: 19px;
+  }
+  footer.site .disclaimer { color: #c9a15c; }
+
+  @media (max-width: 640px) {
+    body { font-size: 20px; }
+    .hero { padding: 60px 0 44px; }
+  }
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="wrap">
+    <div class="logo">ELY<span>HORIZON</span></div>
+    <nav class="site">
+      <a href="#features">Features</a>
+      <a href="#download">Download</a>
+      <a href="#mods">Mods</a>
+      <a href="https://github.com/Sk0vorodka/ElyHorizon">Source</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero wrap">
+    <h1>ELY<span class="ely">HORIZON</span><span class="hz">_</span></h1>
+    <p class="tag">Minecraft: Java Edition, rewritten in Rust — played with <b>ely.by</b> accounts. No Microsoft account needed: your profile, your skin, your worlds.</p>
+    <div class="cta">
+      <a class="btn" href="#download">Download for Windows</a>
+      <a class="btn grey" href="https://github.com/Sk0vorodka/ElyHorizon">View source</a>
+    </div>
+    <p class="small">Free · open source · unofficial. You need your own copy of Minecraft: Java Edition.</p>
+  </section>
+
+  <section id="features" class="wrap">
+    <h2>What it plays like</h2>
+    <div class="grid">
+      <div class="panel card">
+        <div class="icon">🔑</div>
+        <h3>ely.by accounts, two ways</h3>
+        <p>Sign in to the launcher with your ely.by e-mail and password (two-factor accounts ask for the 6-digit code), or press <b>Sign in with browser</b> and finish an OAuth page at account.ely.by.</p>
+      </div>
+      <div class="panel card">
+        <div class="icon">🧑‍🌾</div>
+        <h3>Your ely.by skin</h3>
+        <p>The launcher carries your skin to the game through the session file, so the world draws it without reaching ely.by while you play. Old accounts heal on the next launch.</p>
+      </div>
+      <div class="panel card">
+        <div class="icon">🌍</div>
+        <h3>Vanilla worlds, vanilla rules</h3>
+        <p>The same terrain generation, mobs, redstone and saves as the Java game — checked against it by 281 differential harnesses. Reads your own legally obtained copy of Minecraft.</p>
+      </div>
+      <div class="panel card">
+        <div class="icon">🧩</div>
+        <h3>Mods in Rust</h3>
+        <p>A mod is a small Rust crate compiled to a sandboxed WebAssembly component: HUD panels, a minimap, zoom, own screens with widgets, entities around you, the crosshair target, recipes, keys and storage.</p>
+      </div>
+      <div class="panel card">
+        <div class="icon">🎮</div>
+        <h3>Play with friends</h3>
+        <p>Open to LAN, a hosted Horizon server without Java, or servers that accept ely.by sessions. Your friend on the Java game, you on the Rust one — same protocol.</p>
+      </div>
+      <div class="panel card">
+        <div class="icon">⚡</div>
+        <h3>Native, not Java</h3>
+        <p>No Java runtime while you play: the client and the server are one Rust binary each, started by a small launcher that keeps itself and the game up to date.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="download" class="wrap">
+    <h2>Download</h2>
+    <div class="downloads">
+      <div class="panel">
+        <h3>Horizon Launcher</h3>
+        <p>Installs the game from your own copy of Minecraft, signs you in with ely.by or Microsoft, keeps everything up to date, and hosts servers from its Servers page.</p>
+        <a class="btn" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">Latest builds</a>
+        <span class="file">horizon-launcher.exe</span>
+      </div>
+      <div class="panel">
+        <h3>Horizon Client</h3>
+        <p>The game itself: a native Rust client with the ely.by skin, the mods you turn on, and every vanilla subsystem upstream verifies. The launcher installs it for you.</p>
+        <a class="btn grey" href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">Latest builds</a>
+        <span class="file">horizon-client.exe</span>
+      </div>
+    </div>
+    <p style="color: var(--muted); margin-top: 14px;">Both files sit on the latest build's <b>Artifacts</b> tab. Not an official Minecraft product; ely.by is not affiliated with Mojang.</p>
+  </section>
+
+  <section id="mods" class="wrap">
+    <h2>Mods in Rust</h2>
+    <div class="panel">
+      <p style="margin-top: 0;">A mod is a <b>cdylib</b> crate against the <b>horizon-mod-sdk</b>: declare your capabilities in <b>horizon-mod.toml</b>, export your mod, and the launcher's runtime runs it in a sandbox — no Java, no jar. Entities, the crosshair target, HUD, screens, recipes, input and storage are in the SDK today.</p>
+      <pre class="code"><span class="k">use</span> horizon_mod_sdk::{Mod, Registration, entities, game, hud::{self, Corner, Line}};
+
+<span class="k">struct</span> Radar;
+<span class="k">impl</span> Mod <span class="k">for</span> Radar {
+    <span class="k">fn</span> init() -&gt; <span class="k">Result</span>&lt;(Self, Registration), String&gt; {
+        <span class="k">Ok</span>((Radar, Registration::new().on_tick()))
+    }
+    <span class="k">fn</span> tick(&amp;<span class="k">mut</span> <span class="k">self</span>, _tick: u64) {
+        <span class="k">let</span> <span class="k">Some</span>(player) = game::get_player() <span class="k">else</span> { <span class="k">return</span> };
+        <span class="k">if let</span> <span class="k">Some</span>(near) = entities::list(<span class="s">32.0</span>) {
+            hud::set_panel(Corner::TopRight, &amp;[Line {
+                text: <span class="k">format</span>!(<span class="s">"{} entities nearby"</span>, near.len()),
+                color: <span class="s">0xFFFFFF</span>,
+            }]);
+        }
+    }
+}
+horizon_mod_sdk::export_mod!(Radar);</pre>
+      <p style="margin-bottom: 0;">Worked examples: <a href="https://github.com/Sk0vorodka/ElyHorizon/tree/feat/elyby/crates/horizon-mod-sdk/examples">entity-radar, crosshair-hud, coords-hud and more</a>. The full contract: <a href="https://github.com/Sk0vorodka/ElyHorizon/blob/feat/elyby/crates/horizon-mod-sdk/wit/horizon.wit">horizon.wit</a>.</p>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <h2>The fine print</h2>
+    <div class="panel">
+      <ul class="check">
+        <li>Free and open source, MIT-licensed — a fork of <a href="https://github.com/horizon-rust/horizon">Horizon</a> by Ludovic Marie.</li>
+        <li>Accounts by <a href="https://ely.by">ely.by</a>: password + 2FA, or OAuth in the browser; skins come with the account.</li>
+        <li>Works with Microsoft accounts too, exactly as upstream Horizon does.</li>
+        <li>Java mod jars do not run: Horizon's mods are Rust in a sandbox.</li>
+      </ul>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <p class="disclaimer">Not an official Minecraft product. Not approved by or associated with Mojang or Microsoft. ElyHorizon contains no Minecraft code, assets or data.</p>
+    <p>ElyHorizon — a fork of Horizon (MIT) by Ludovic Marie · ely.by is an independent account service · <a href="https://github.com/Sk0vorodka/ElyHorizon">source</a> · <a href="https://ci.appveyor.com/project/Sk0vorodka/elyhorizon">builds</a></p>
+  </div>
+</footer>
+
+</body>
+</html>
