@@ -1,0 +1,8 @@
+id = "server_helper"
+name = "Server Helper"
+version = "0.2.0"
+description = "Auto-login and auto-register for offline servers with auth plugins: remembers your password per launcher, answers /login and /register prompts (the texts adjustable), and shows a status panel. All data stays on your PC."
+authors = ["Sk0vorodka"]
+api = "0.1"
+side = "client"
+capabilities = ["chat", "command", "hud", "storage"]

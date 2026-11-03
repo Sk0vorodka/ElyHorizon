@@ -119,6 +119,11 @@ interface command {
     /// `msg`) is refused. On any other server they go as chat commands, and
     /// there their feedback shows: a mod running many should say so.
     run-quiet: func(lines: list<string>);
+    /// Sends `text` as if the player typed it: a leading `/` runs it as a
+    /// command, so a server's plugin commands — a `/login`, a `/hub` — go
+    /// through (unlike `run`, which carries vanilla commands only); plain
+    /// text goes to the chat. At most 8 per call, 256 characters.
+    send: func(text: string);
 }
 
 /// Capability `ui`: widgets the game draws with its own menus' widgets, for

@@ -240,6 +240,9 @@ pub enum Output {
     /// `command.run`: a vanilla command line, without its slash, to run as
     /// the player.
     Command { line: String },
+    /// `command.send`: a chat line as the player typed it — a leading `/`
+    /// runs a command (plugin commands included), plain text to the chat.
+    ChatSend { text: String },
     /// `command.run-quiet`: vanilla command lines to run as the player with
     /// nothing in the chat (`horizon_protocol::quiet` on a server).
     QuietCommands { mod_id: String, lines: Vec<String> },
@@ -1950,6 +1953,16 @@ impl command::Host for State {
             .count();
         if queued < CHAT_PER_CALL {
             self.out.push(Output::Command { line: clip(line) });
+        }
+    }
+    fn send(&mut self, text: String) {
+        let queued = self
+            .out
+            .iter()
+            .filter(|o| matches!(o, Output::Command { .. } | Output::ChatSend { .. }))
+            .count();
+        if queued < CHAT_PER_CALL {
+            self.out.push(Output::ChatSend { text: clip(text) });
         }
     }
     fn run_quiet(&mut self, lines: Vec<String>) {

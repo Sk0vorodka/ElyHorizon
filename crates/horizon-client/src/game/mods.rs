@@ -764,6 +764,13 @@ impl Game<'_> {
                     }
                     continue;
                 }
+                // `command.send`: the mod's line exactly as the player typed
+                // it — a leading `/` reaches the server's plugin commands,
+                // which `run`'s vanilla-only filter would drop.
+                Output::ChatSend { text } => {
+                    self.send_chat(&text);
+                    continue;
+                }
                 Output::QuietCommands { mod_id, lines } => {
                     self.mod_quiet_commands(mod_id, lines);
                     continue;

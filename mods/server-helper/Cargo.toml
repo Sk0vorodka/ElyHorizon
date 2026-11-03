@@ -1,0 +1,15 @@
+[workspace]
+
+[package]
+name = "server-helper"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Horizon mod: auto-login and auto-register on offline servers with auth plugins, with a status HUD"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rustcraft-sdk = { path = "../../crates/rustcraft-sdk" }

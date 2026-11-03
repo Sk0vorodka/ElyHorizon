@@ -266,6 +266,16 @@ fn play(path: &Path, report: &mut Report) -> Result<(), String> {
                 format!("{}: {text}", if error { "error" } else { "feedback" })
             }
             Output::Command { line } => format!("command: /{line}"),
+            Output::ChatSend { text } => {
+                format!(
+                    "{}: {text}",
+                    if text.starts_with('/') {
+                        "command (sent)"
+                    } else {
+                        "chat (sent)"
+                    }
+                )
+            }
             Output::QuietCommands { lines, .. } => {
                 format!("{} quiet command(s)", lines.len())
             }
