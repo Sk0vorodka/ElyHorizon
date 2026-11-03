@@ -105,6 +105,7 @@ def main() -> None:
     parser.add_argument("--client", required=True, help="horizon-client.exe")
     parser.add_argument("--server", required=True, help="horizon-server.exe")
     parser.add_argument("--ctl", required=True, help="horizon-ctl.exe")
+    parser.add_argument("--prepare", required=True, help="horizon-prepare.exe")
     parser.add_argument("--launcher", required=True, help="horizon-launcher.exe")
     parser.add_argument("--commit", default="", help="the commit built (the release body says it)")
     parser.add_argument("--repo-dir", default=".", help="the ElyHorizon checkout the archived files come from")
@@ -117,6 +118,7 @@ def main() -> None:
     client = exe(Path(args.client))
     server = exe(Path(args.server))
     ctl = exe(Path(args.ctl))
+    prepare = exe(Path(args.prepare))
     launcher = exe(Path(args.launcher))
     stamp = args.build.strip().replace(" ", "-")
     client_zip_name = f"ElyHorizonClient-x64-{stamp}.zip"
@@ -132,6 +134,7 @@ def main() -> None:
         z.write(client, f"{top}/horizon-client.exe")
         z.write(server, f"{top}/horizon-server.exe")
         z.write(ctl, f"{top}/horizon-ctl.exe")
+        z.write(prepare, f"{top}/horizon-prepare.exe")
         for archived in ARCHIVED:
             source = repo / archived
             if not source.exists():

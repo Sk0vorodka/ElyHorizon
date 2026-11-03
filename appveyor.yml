@@ -79,7 +79,7 @@ build_script:
       $build = if ($env:JOB -eq 'launcher') {
         'cargo build --release --manifest-path launcher/Cargo.toml 2>&1'
       } else {
-        'cargo build --release -p horizon-client --bin horizon-client --bin horizon-ctl -p horizon-server --bin horizon-server --features horizon-client/mods 2>&1'
+        'cargo build --release -p horizon-client --bin horizon-client --bin horizon-ctl -p horizon-prepare --bin horizon-prepare -p horizon-server --bin horizon-server --features horizon-client/mods 2>&1'
       }
       cmd /c $build
       if ($LASTEXITCODE -ne 0) {
@@ -93,5 +93,7 @@ artifacts:
     name: horizon-client-windows
   - path: target\release\horizon-ctl.exe
     name: horizon-ctl-windows
+  - path: target\release\horizon-prepare.exe
+    name: horizon-prepare-windows
   - path: target\release\horizon-server.exe
     name: horizon-server-windows
