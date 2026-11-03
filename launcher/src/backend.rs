@@ -151,7 +151,10 @@ fn own_tag_of(tag: Option<&str>, injected: Option<&str>) -> String {
         injected.filter(|v| !v.is_empty()),
     ) {
         (Some(tag), _) => tag.to_string(),
-        (None, Some(version)) => format!("{OLD_LAUNCHER_TAG_PREFIX}{version}"),
+        // The new shape: a bare version injected by CI must compare against
+        // launcher@ releases as an equal, not as a pre-0.2 launcher (which
+        // sorts below every launcher@ tag and loops the self-update).
+        (None, Some(version)) => format!("{LAUNCHER_TAG_PREFIX}{version}"),
         (None, None) => format!("{LAUNCHER_TAG_PREFIX}{}", env!("CARGO_PKG_VERSION")),
     }
 }
