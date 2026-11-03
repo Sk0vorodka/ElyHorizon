@@ -622,18 +622,37 @@ fn check(ep: &Endpoints, client_id: Option<&str>, account: &Account, secrets: Se
 /// as a valid owner (ely.by is an alternative account service; the launcher doesn't gate
 /// the game on Mojang entitlements for these accounts).
 fn check_elyby(account: &Account, mut secrets: Secrets) -> Check {
-    // ely.by tokens don't carry an expiry; refresh at each launch to validate.
-    if secrets.ely_client_token().is_none() {
+    // Two ely.by session kinds, each renewing its own way: the password
+    // flow's Yggdrasil pair (client_token set; /auth/refresh), and the
+    // OAuth flow's access + refresh tokens (account.ely.by's token
+    // endpoint, grant_type=refresh_token).
+    if secrets.ely_client_token().is_some() {
+        return match crate::account::elyby::refresh(&secrets) {
+            Ok(renewed) => {
+                secrets = renewed;
+                Check::Owns(account.clone(), secrets)
+            }
+            Err(e) => Check::NoAnswer(
+                format!("Could not reach ely.by to renew the session: {e}"),
+                secrets,
+            ),
+        };
+    }
+    if secrets.refresh_token.is_empty() {
         return Check::NoAnswer(
-            "This ely.by account is missing its client token. Sign in again.".into(),
+            "This ely.by account is missing its session tokens. Sign in again.".into(),
             secrets,
         );
     }
-    match crate::account::elyby::refresh(&secrets) {
-        Ok(renewed) => {
-            secrets = renewed;
-            Check::Owns(account.clone(), secrets)
-        }
+    let client_id = std::env::var(crate::account::elyby::OAUTH_CLIENT_ID_ENV)
+        .unwrap_or_else(|_| crate::account::elyby::OAUTH_CLIENT_ID_DEFAULT.to_owned());
+    let client_secret = std::env::var(crate::account::elyby::OAUTH_CLIENT_SECRET_ENV)
+        .unwrap_or_else(|_| crate::account::elyby::OAUTH_CLIENT_SECRET_DEFAULT.to_owned());
+    match crate::account::elyby::oauth_refresh(&client_id, &client_secret, &secrets.refresh_token) {
+        Ok((access, refresh, expires)) => Check::Owns(
+            account.clone(),
+            Secrets::elyby_oauth(access, refresh, expires),
+        ),
         Err(e) => Check::NoAnswer(
             format!("Could not reach ely.by to renew the session: {e}"),
             secrets,
