@@ -29,10 +29,11 @@ build_script:
   - ps: |
       $ErrorActionPreference = 'Continue'
       $env:PATH = "$env:USERPROFILE\.cargo\bin;$env:PATH"
-      # The launcher reports its AppVeyor build version (`horizon-launcher
-      # --version`; the self-update's guard reads it): unstamped builds all
-      # say Cargo.toml's 0.2.0 and the self-update loops on them.
-      $env:HORIZON_LAUNCHER_VERSION = $env:APPVEYOR_BUILD_VERSION
+      # The launcher reports itself as its own tag (`horizon-launcher
+      # --version`; the self-update compares tags): HORIZON_LAUNCHER_VERSION
+      # alone would build the OLD launcher-v<version> tag shape, which sorts
+      # below every launcher@ tag and loops the self-update forever.
+      $env:HORIZON_LAUNCHER_TAG = "launcher@$($env:APPVEYOR_BUILD_VERSION)" 
       if ($env:APPVEYOR_FORCED_BUILD -eq 'True') {
         Write-Host "Forced build: building JOB=$($env:JOB) whatever changed."
       } else {
