@@ -2,14 +2,23 @@
 //! (`/login`, `/register`): it remembers your password locally and answers
 //! the prompts itself, so joining a server is one click.
 //!
+//! Everything it does is reported in chat. The HUD is opt-in: `/shud` shows
+//! a small one-line panel in the bottom-right corner (away from the chat,
+//! the crosshair and the scoreboard). The only other moment anything is on
+//! screen is the registration flash, which clears itself after a few
+//! seconds — no marker follows the login attempts around.
+//!
 //! Commands:
-//! - `/shud on|off` — show/hide the status panel.
+//! - `/shud` — toggle the optional status panel (bottom-right corner).
 //! - `/spass <password>` — store the password and arm auto-login.
 //! - `/sgen [len]` — generate a random password, store it, and answer the
 //!   server's `/register` with it (so you can log in from other launchers too).
-//! - `/spat <text>` — the chat text that counts as a login/register prompt
+//! - `/spatl <text>` — the chat text that counts as a login prompt
 //!   (default: `/login`).
+//! - `/spatr <text>` — the same for registration (default: `/reg`, which
+//!   matches `/reg` and `/register`).
 //! - `/sforget` — forget the password.
+//! - `/shelp` — this list.
 //!
 //! Everything lives in the mod's own storage on this computer.
 
@@ -24,12 +33,20 @@ const PASS_KEY: &str = "password";
 const PATTERN_LOGIN_KEY: &str = "pattern_login";
 const PATTERN_REGISTER_KEY: &str = "pattern_register";
 const ENABLED_KEY: &str = "enabled";
+const PANEL_KEY: &str = "panel";
 const DEFAULT_LOGIN_PATTERN: &str = "/login";
 const DEFAULT_REGISTER_PATTERN: &str = "/reg";
 const MAX_LOGIN_ATTEMPTS: u32 = 3;
+/// How long the registration flash stays up by itself (4 s): after that the
+/// screen is clean again, whether the server accepted it or not — chat
+/// carries the news either way.
+const FLASH_TICKS: u64 = 80;
 
 struct ServerHelper {
+    /// Auto-login answers the prompts (default on).
     on: bool,
+    /// The optional status panel, bottom-right (default off; `/shud`).
+    panel: bool,
     password: Option<String>,
     /// The login prompt's text (`/login`).
     pat_login: String,
@@ -40,7 +57,12 @@ struct ServerHelper {
     login_attempts: u32,
     /// Registered on this server during this session.
     registered: bool,
-    last_panel: Vec<String>,
+    /// The one-line flash on screen, and the tick it disappears after.
+    flash: String,
+    flash_until: u64,
+    /// The last tick seen (a chat answer times its flash from it).
+    last_tick: u64,
+    last_shown: Option<Vec<String>>,
 }
 
 /// The prompt test: the stored pattern, case-insensitively, anywhere in the line.
@@ -48,63 +70,87 @@ fn is_prompt(pattern: &str, line: &str) -> bool {
     line.to_lowercase().contains(&pattern.to_lowercase())
 }
 
+/// Advances on every [`generate`] call, so two passwords made in one tick
+/// still differ (the counter's odd start keeps the xorshift's `| 1` intact).
+static CALLS: std::sync::atomic::AtomicU64 =
+    std::sync::atomic::AtomicU64::new(0x9E37_79B9_7F4A_7C15);
+
 /// A random alphanumeric password (no look-alikes: no 0/O, 1/l/I).
-fn generate(len: usize) -> String {
+///
+/// The sandbox offers no wall clock and no randomness (both panic or miss on
+/// `wasm32-unknown-unknown`), so the state mixes the tick the mod last saw
+/// with a per-call counter, through splitmix64's finalizer — adjacent
+/// counter values land far apart, unlike a plain `| 1` mask that could
+/// swallow a one-bit difference. Fine for a server password a player can
+/// also type by hand; not cryptography.
+fn generate(len: usize, tick: u64) -> String {
     let alphabet: &[u8] = b"abcdefghjkmnpqrstuvwxyzACDEFGHJKLMNPQRSTUVWXYZ23456789";
-    let mut x = (std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.subsec_nanos() as u64)
-        .unwrap_or(0x9E37_79B9)
-        | 1)
-        .wrapping_mul(0x2545_F491_4F6C_DD1D);
+    let mut z = tick ^ CALLS.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
+    z = z.wrapping_add(0x9E37_79B9_7F4A_7C15);
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    let mut x = z ^ (z >> 31);
     (0..len)
         .map(|_| {
             x ^= x << 13;
             x ^= x >> 7;
             x ^= x << 17;
+            if x == 0 {
+                x = 0x2545_F491_4F6C_DD1D; // the xorshift's fixed point
+            }
             alphabet[(x % alphabet.len() as u64) as usize] as char
         })
         .collect()
 }
 
-/// The panel's lines for the current state.
+/// The panel's single line: it sits in the corner during play, so it stays
+/// short — the details are `/shelp` and the chat.
 fn lines(helper: &ServerHelper) -> Vec<String> {
-    let mut out = vec![format!(
-        "Auto-login: {}",
-        match (&helper.password, helper.on) {
-            (Some(_), true) => "armed".to_string(),
-            (Some(_), false) => "off".to_string(),
-            (None, _) => "no password (/sgen to register, /spass to set)".to_string(),
+    vec![format!(
+        "Server Helper: {}",
+        match &helper.password {
+            Some(_) => "armed (/shelp)",
+            None => "no password: /sgen or /spass",
         }
-    )];
-    if helper.password.is_some() {
-        out.push(format!(
-            "Login attempts left: {}",
-            MAX_LOGIN_ATTEMPTS.saturating_sub(helper.login_attempts)
-        ));
-        out.push(format!("Prompts: {} | {}", helper.pat_login, helper.pat_reg));
-    }
-    out
+    )]
 }
 
-fn draw_panel(helper: &mut ServerHelper) {
-    let now = lines(helper);
-    if now != helper.last_panel {
-        let panel: Vec<Line> = now
-            .iter()
-            .map(|text| Line {
-                text: text.clone(),
-                color: 0xFFFFFF,
-            })
-            .collect();
-        hud::set_panel(Corner::TopLeft, &panel);
-        helper.last_panel = now;
+/// What the HUD shows this tick, if anything: a flash in progress, else the
+/// optional panel — and during normal play, nothing at all.
+fn hud_now(helper: &ServerHelper, tick: u64) -> Option<Vec<String>> {
+    if tick < helper.flash_until {
+        return Some(vec![helper.flash.clone()]);
+    }
+    if helper.panel {
+        return Some(lines(helper));
+    }
+    None
+}
+
+/// Puts `hud_now` on screen, in the bottom-right corner, only when it changed.
+fn draw(helper: &mut ServerHelper, tick: u64) {
+    let now = hud_now(helper, tick);
+    if now != helper.last_shown {
+        if let Some(ls) = &now {
+            let panel: Vec<Line> = ls
+                .iter()
+                .map(|text| Line {
+                    text: text.clone(),
+                    color: 0xFFFFFF,
+                })
+                .collect();
+            hud::set_panel(Corner::BottomRight, &panel);
+        } else {
+            hud::clear();
+        }
+        helper.last_shown = now;
     }
 }
 
-fn clear_panel(helper: &mut ServerHelper) {
-    hud::clear();
-    helper.last_panel.clear();
+/// Shows a one-line flash that clears itself after [`FLASH_TICKS`].
+fn flash(helper: &mut ServerHelper, text: &str) {
+    helper.flash = text.to_owned();
+    helper.flash_until = helper.last_tick.saturating_add(FLASH_TICKS);
 }
 
 fn stored_pattern(key: &str, default: &str) -> String {
@@ -123,15 +169,22 @@ impl Mod for ServerHelper {
         let on = storage::get(ENABLED_KEY)
             .map(|b| b.first() == Some(&b'1'))
             .unwrap_or(true);
+        let panel = storage::get(PANEL_KEY)
+            .map(|b| b.first() == Some(&b'1'))
+            .unwrap_or(false);
         Ok((
             ServerHelper {
                 on,
+                panel,
                 password,
                 pat_login: stored_pattern(PATTERN_LOGIN_KEY, DEFAULT_LOGIN_PATTERN),
                 pat_reg: stored_pattern(PATTERN_REGISTER_KEY, DEFAULT_REGISTER_PATTERN),
                 login_attempts: 0,
                 registered: false,
-                last_panel: Vec::new(),
+                flash: String::new(),
+                flash_until: 0,
+                last_tick: 0,
+                last_shown: None,
             },
             Registration::new()
                 .command("shud")
@@ -146,10 +199,9 @@ impl Mod for ServerHelper {
         ))
     }
 
-    fn tick(&mut self, _tick: u64) {
-        if self.on {
-            draw_panel(self);
-        }
+    fn tick(&mut self, tick: u64) {
+        self.last_tick = tick;
+        draw(self, tick);
     }
 
     fn chat(&mut self, text: &str) {
@@ -163,7 +215,7 @@ impl Mod for ServerHelper {
             let pass = match &self.password {
                 Some(p) => p.clone(),
                 None => {
-                    let p = generate(12);
+                    let p = generate(12, self.last_tick);
                     storage::set(PASS_KEY, p.as_bytes()).ok();
                     self.password = Some(p.clone());
                     chat::show(&format!(
@@ -176,6 +228,7 @@ impl Mod for ServerHelper {
             // commands only).
             command::send(&format!("/register {pass} {pass}"));
             self.registered = true;
+            flash(self, "Server Helper: registering…");
             chat::show("Server Helper: registered. The next prompt is a /login.");
             return;
         }
@@ -205,14 +258,19 @@ impl Mod for ServerHelper {
     fn command(&mut self, name: &str, args: &str) -> Result<Option<String>, String> {
         match name {
             "shud" => {
-                self.on = !self.on;
-                if !self.on {
-                    clear_panel(self);
+                self.panel = !self.panel;
+                storage::set(PANEL_KEY, if self.panel { b"1" } else { b"0" }).ok();
+                if !self.panel {
+                    hud::clear();
+                    self.last_shown = None;
                 }
-                storage::set(ENABLED_KEY, if self.on { b"1" } else { b"0" }).ok();
                 Ok(Some(format!(
-                    "Status panel {}",
-                    if self.on { "on" } else { "off" }
+                    "Status panel {} — reports stay in chat either way.",
+                    if self.panel {
+                        "on (bottom-right corner)"
+                    } else {
+                        "off"
+                    }
                 )))
             }
             "spass" => {
@@ -227,7 +285,7 @@ impl Mod for ServerHelper {
             }
             "sgen" => {
                 let len = args.trim().parse::<usize>().unwrap_or(12).clamp(8, 32);
-                let pass = generate(len);
+                let pass = generate(len, self.last_tick);
                 storage::set(PASS_KEY, pass.as_bytes()).ok();
                 self.password = Some(pass.clone());
                 self.login_attempts = 0;
@@ -259,7 +317,7 @@ impl Mod for ServerHelper {
                 Ok(Some("Password forgotten.".into()))
             }
             "shelp" => Ok(Some(
-                "/spass <password> — store and arm; /sgen [len] — generate and store; /spatl|spatr <text> — the login/register prompt texts; /sforget — forget; /shud — the panel.".into(),
+                "/spass <password> — store and arm; /sgen [len] — generate and store; /spatl|/spatr <text> — the login/register prompt texts; /sforget — forget; /shud — a small panel in the bottom-right corner (off by default).".into(),
             )),
             _ => Err("This command does nothing".into()),
         }
@@ -271,6 +329,22 @@ rustcraft_sdk::export_mod!(ServerHelper);
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    fn helper() -> ServerHelper {
+        ServerHelper {
+            on: true,
+            panel: false,
+            password: Some("hunter2".into()),
+            pat_login: "/login".into(),
+            pat_reg: "/reg".into(),
+            login_attempts: 1,
+            registered: false,
+            flash: String::new(),
+            flash_until: 0,
+            last_tick: 0,
+            last_shown: None,
+        }
+    }
 
     #[test]
     fn the_prompt_matches_case_insensitively() {
@@ -288,32 +362,46 @@ mod tests {
 
     #[test]
     fn generated_passwords_use_the_safe_alphabet() {
-        let pass = generate(12);
+        let pass = generate(12, 1_000);
         assert_eq!(pass.len(), 12);
         assert!(pass.chars().all(|c| c.is_ascii_alphanumeric()));
         assert!(!pass.chars().any(|c| "ilo01O".contains(c)));
     }
 
     #[test]
-    fn the_panel_lines_follow_the_state() {
-        let mut helper = ServerHelper {
-            on: true,
-            password: Some("hunter2".into()),
-            pat_login: "/login".into(),
-            pat_reg: "/reg".into(),
-            login_attempts: 1,
-            registered: false,
-            last_panel: Vec::new(),
-        };
-        let panel = lines(&helper);
-        assert_eq!(panel[0], "Auto-login: armed");
-        assert_eq!(panel[1], "Login attempts left: 2");
-        assert_eq!(panel[2], "Prompts: /login | /reg");
-        assert_eq!(lines(&helper).len(), 3);
+    fn two_passwords_in_one_tick_differ() {
+        let a = generate(16, 1_000);
+        let b = generate(16, 1_000);
+        assert_ne!(a, b);
+        assert_ne!(generate(16, 0), generate(16, u64::MAX));
+    }
+
+    #[test]
+    fn the_panel_is_one_short_line() {
+        let mut helper = helper();
+        assert_eq!(lines(&helper), vec!["Server Helper: armed (/shelp)"]);
         helper.password = None;
         assert_eq!(
-            lines(&helper)[0],
-            "Auto-login: no password (/sgen to register, /spass to set)"
+            lines(&helper),
+            vec!["Server Helper: no password: /sgen or /spass"]
         );
+    }
+
+    #[test]
+    fn the_hud_stays_quiet_during_play() {
+        let mut helper = helper();
+        // Normal play, panel off: nothing on screen at all.
+        assert_eq!(hud_now(&helper, 100), None);
+        // The registration flash: it shows, then clears itself — no success
+        // detection needed.
+        flash(&mut helper, "Server Helper: registering…");
+        assert_eq!(
+            hud_now(&helper, helper.last_tick),
+            Some(vec!["Server Helper: registering…".to_owned()])
+        );
+        assert_eq!(hud_now(&helper, helper.flash_until), None);
+        // The opt-in panel shows while it is on.
+        helper.panel = true;
+        assert!(hud_now(&helper, helper.flash_until).is_some());
     }
 }

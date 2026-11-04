@@ -47,6 +47,9 @@ build_script:
             $_ -notlike 'docs/*' -and
             $_ -notlike 'site/*' -and
             $_ -notlike 'tools/*' -and
+            # RustCraft mods build standalone (their own workspace, a wasm
+            # target CI never builds): a mod edit wakes no job.
+            $_ -notlike 'mods/*' -and
             $_ -notlike '*.md'
           }
         }
