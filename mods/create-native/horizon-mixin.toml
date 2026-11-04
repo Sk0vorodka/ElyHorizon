@@ -1,0 +1,21 @@
+# Create for RustCraft, the native half: a mixin on the game's creative
+# inventory that adds the content mod's blocks as their own tab and to the
+# search, which the data pipeline does not do yet (creative-inventory.json
+# is vanilla-only).
+#
+# Built by the launcher: horizon-launcher native-build mods/create-native
+# --trust-native-code. Pins the fork commit it was written against.
+[mod]
+id = "create_native"
+version = "0.1.0"
+priority = 100
+
+[compatibility]
+horizon_revision = "296cfd9500212c73f29491a8306efde1540770b1"
+
+[[injection]]
+id = "create_tab"
+target = "horizon_client::creative::Creative::reopen"
+kind = "HEAD"
+helper = "create_tab.rs"
+bindings = [{ name = "creative", ty = "&mut Creative", value = "&mut *self" }]
