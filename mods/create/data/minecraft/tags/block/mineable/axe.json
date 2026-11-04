@@ -1,0 +1,10 @@
+{
+	"values": [
+		"create:cogwheel",
+		"create:large_cogwheel",
+		"create:shaft",
+		"create:water_wheel",
+		"create:windmill",
+		"create:cogwheel_off"
+	]
+}

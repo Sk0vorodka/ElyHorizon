@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"WWW",
+		"WSW",
+		"WWW"
+	],
+	"key": {
+		"W": "minecraft:white_wool",
+		"S": "create:shaft"
+	},
+	"result": {
+		"id": "create:windmill",
+		"count": 1
+	}
+}

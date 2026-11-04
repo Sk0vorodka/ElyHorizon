@@ -1,0 +1,182 @@
+{
+	"parent": "minecraft:block/block",
+	"textures": {
+		"axis": "create:block/axis",
+		"axis_top": "create:block/axis_top",
+		"sail": "minecraft:block/white_wool",
+		"particle": "create:block/axis"
+	},
+	"elements": [
+		{
+			"name": "axis",
+			"from": [
+				6,
+				0,
+				6
+			],
+			"to": [
+				10,
+				16,
+				10
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#axis"
+				},
+				"east": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#axis"
+				},
+				"south": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#axis"
+				},
+				"west": {
+					"uv": [
+						6,
+						0,
+						10,
+						16
+					],
+					"texture": "#axis"
+				},
+				"up": {
+					"uv": [
+						6,
+						6,
+						10,
+						10
+					],
+					"texture": "#axis_top"
+				},
+				"down": {
+					"uv": [
+						6,
+						6,
+						10,
+						10
+					],
+					"texture": "#axis_top"
+				}
+			}
+		},
+		{
+			"name": "sail_east_west",
+			"from": [
+				0,
+				6,
+				6
+			],
+			"to": [
+				16,
+				10,
+				10
+			],
+			"faces": {
+				"north": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				},
+				"south": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				}
+			}
+		},
+		{
+			"name": "sail_north_south",
+			"from": [
+				6,
+				6,
+				0
+			],
+			"to": [
+				10,
+				10,
+				16
+			],
+			"faces": {
+				"east": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				},
+				"west": {
+					"uv": [
+						0,
+						0,
+						16,
+						4
+					],
+					"texture": "#sail"
+				},
+				"up": {
+					"uv": [
+						0,
+						0,
+						4,
+						16
+					],
+					"texture": "#sail"
+				},
+				"down": {
+					"uv": [
+						0,
+						0,
+						4,
+						16
+					],
+					"texture": "#sail"
+				}
+			}
+		}
+	]
+}

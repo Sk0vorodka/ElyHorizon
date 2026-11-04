@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"C C",
+		"CGC",
+		"C C"
+	],
+	"key": {
+		"C": "minecraft:cobblestone",
+		"G": "create:cogwheel"
+	},
+	"result": {
+		"id": "create:gearbox",
+		"count": 1
+	}
+}

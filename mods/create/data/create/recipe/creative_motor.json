@@ -1,0 +1,18 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"IRI",
+		"ICI",
+		"IRI"
+	],
+	"key": {
+		"I": "minecraft:iron_ingot",
+		"R": "minecraft:redstone",
+		"C": "create:cogwheel"
+	},
+	"result": {
+		"id": "create:creative_motor",
+		"count": 1
+	}
+}

@@ -1,0 +1,12 @@
+# Create for RustCraft, the content half (API 0.2): the kinetic blocks with
+# Create's own textures and models. The simulation lives in the
+# create-kinetics server mod. Create is by simibubi and the Create team
+# (assets CC BY-NC-SA 4.0) - this mod carries their art with attribution.
+id = "create"
+name = "Create for RustCraft"
+version = "0.1.0"
+description = "The base of Create on RustCraft: cogwheels, shafts, a gearbox, generators (creative motor, water wheel, windmill) and a millstone, with Create's own textures. Pair with the create-kinetics mod for the rotation simulation."
+authors = ["Sk0vorodka", "Create team (textures and models)"]
+api = "0.2"
+side = "both"
+capabilities = ["registries"]

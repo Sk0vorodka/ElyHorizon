@@ -1,0 +1,17 @@
+{
+	"variants": {
+		"axis=y": {
+			"model": "create:block/cogwheel_spin"
+		},
+		"axis=x": {
+			"model": "create:block/cogwheel_spin",
+			"x": 90,
+			"y": 90
+		},
+		"axis=z": {
+			"model": "create:block/cogwheel_spin",
+			"x": 90,
+			"y": 180
+		}
+	}
+}

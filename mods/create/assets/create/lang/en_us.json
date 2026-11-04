@@ -1,0 +1,12 @@
+{
+	"block.create.cogwheel": "Cogwheel",
+	"block.create.large_cogwheel": "Large Cogwheel",
+	"block.create.shaft": "Shaft",
+	"block.create.gearbox": "Gearbox",
+	"block.create.creative_motor": "Creative Motor",
+	"block.create.water_wheel": "Water Wheel",
+	"block.create.windmill": "Windmill",
+	"block.create.millstone": "Millstone",
+	"itemGroup.create": "Create (RustCraft)",
+	"create.credit": "Block textures and models by the Create team (simibubi and contributors), CC BY-NC-SA 4.0"
+}

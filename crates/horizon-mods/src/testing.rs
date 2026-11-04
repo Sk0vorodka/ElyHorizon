@@ -237,13 +237,17 @@ impl TestGame {
         self.snapshot();
         self.mods.server_command(player, line)
     }
-    /// `player` breaks (or places) `state` at `pos`.
+    /// `player` breaks (or places) `state` at `pos`. The world takes the
+    /// block too, as it does in the game: a world-reading mod sees what the
+    /// players built.
     pub fn block(&mut self, player: &ServerPlayer, pos: BlockPos, state: &str, placed: bool) {
         self.snapshot();
         if placed {
             self.mods.block_placed(player, pos, state);
+            self.world.insert((pos.x, pos.y, pos.z), state.to_owned());
         } else {
             self.mods.block_broken(player, pos, state);
+            self.world.remove(&(pos.x, pos.y, pos.z));
         }
     }
 

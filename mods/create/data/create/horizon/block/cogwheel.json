@@ -1,0 +1,8 @@
+{
+	"template": "minecraft:oak_log",
+	"item": true,
+	"properties": {
+		"hardness": 0.8,
+		"sounds": "minecraft:oak_log"
+	}
+}

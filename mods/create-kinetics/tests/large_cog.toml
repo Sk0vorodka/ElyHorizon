@@ -1,0 +1,36 @@
+# A large cogwheel halves the speed that passes it; a millstone runs at 2
+# RPM or more. /create info works from any block of the network.
+
+[[step]]
+join = "Alex"
+
+[[step]]
+as = "Alex"
+place = { x = 4, y = 64, z = 4, state = "create:creative_motor[axis=y]" }
+
+[[step]]
+as = "Alex"
+place = { x = 4, y = 65, z = 4, state = "create:large_cogwheel[axis=y]" }
+
+[[step]]
+as = "Alex"
+place = { x = 5, y = 65, z = 4, state = "create:shaft[axis=x]" }
+
+[[step]]
+as = "Alex"
+place = { x = 6, y = 65, z = 4, state = "create:millstone" }
+
+# From the motor: 16 RPM, halved to 8 past the large cogwheel — the
+# millstone at 8 runs.
+[[step]]
+as = "Alex"
+player = { x = 4.5, y = 64.0, z = 4.5 }
+command = "create info"
+expect.feedback = "Network: 4 block(s) at 16 RPM — 1 large cogwheel, 1 millstone, 1 motor, 1 shaft. Millstone(s) running: 1/1."
+
+# From the millstone: the same network.
+[[step]]
+as = "Alex"
+player = { x = 6.5, y = 65.0, z = 4.5 }
+command = "create info"
+expect.feedback = "Network: 4 block(s) at 16 RPM — 1 large cogwheel, 1 millstone, 1 motor, 1 shaft. Millstone(s) running: 1/1."

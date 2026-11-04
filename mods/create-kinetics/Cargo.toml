@@ -1,0 +1,15 @@
+[workspace]
+
+[package]
+name = "create-kinetics"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+publish = false
+description = "Horizon server mod: the kinetic rotation simulation for Create for RustCraft"
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+rustcraft-sdk = { path = "../../crates/rustcraft-sdk" }

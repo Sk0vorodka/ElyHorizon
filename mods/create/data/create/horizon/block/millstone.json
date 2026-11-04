@@ -1,0 +1,8 @@
+{
+	"template": "minecraft:smooth_stone",
+	"item": true,
+	"properties": {
+		"hardness": 2.0,
+		"sounds": "minecraft:grindstone"
+	}
+}

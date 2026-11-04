@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"SSS",
+		"SCS",
+		"SSS"
+	],
+	"key": {
+		"S": "minecraft:stone",
+		"C": "create:cogwheel"
+	},
+	"result": {
+		"id": "create:millstone",
+		"count": 1
+	}
+}

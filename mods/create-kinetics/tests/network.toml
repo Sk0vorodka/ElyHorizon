@@ -1,0 +1,62 @@
+# A motor drives a shaft and a cogwheel; /create info reports the network;
+# /create speed turns the motor up; breaking the shaft stops the cogwheel,
+# which swaps to its idle model.
+
+[[step]]
+join = "Alex"
+
+[[step]]
+as = "Alex"
+place = { x = 2, y = 64, z = 0, state = "create:creative_motor[axis=y]" }
+
+[[step]]
+as = "Alex"
+place = { x = 2, y = 65, z = 0, state = "create:shaft[axis=y]" }
+
+[[step]]
+as = "Alex"
+place = { x = 2, y = 66, z = 0, state = "create:cogwheel[axis=y]" }
+
+# Stand on the shaft and ask: the crawl is live.
+[[step]]
+as = "Alex"
+player = { x = 2.5, y = 65.0, z = 0.5 }
+command = "create info"
+expect.feedback = "Network: 3 block(s) at 16 RPM — 1 cogwheel, 1 motor, 1 shaft."
+
+# A tick runs the rescan; the cogwheel is spinning (so it stays cogwheel).
+[[step]]
+ticks = 1
+expect.blocks = [{ x = 2, y = 66, z = 0, state = "create:cogwheel[axis=y]" }]
+
+[[step]]
+as = "Alex"
+command = "create stats"
+expect.feedback = "Tracked 3 block(s); last scan found 1 network(s), 1 cogwheel(s) spinning."
+
+# Stand on the motor and turn it up.
+[[step]]
+as = "Alex"
+player = { x = 2.5, y = 64.0, z = 0.5 }
+command = "create speed 24"
+expect.feedback = "Motor speed set to 24 RPM."
+
+[[step]]
+as = "Alex"
+command = "create info"
+expect.feedback = "Network: 3 block(s) at 24 RPM — 1 cogwheel, 1 motor, 1 shaft."
+
+# Break the shaft: the cogwheel loses power and idles.
+[[step]]
+as = "Alex"
+player = { x = 2.5, y = 65.0, z = 0.5 }
+break = { x = 2, y = 65, z = 0, state = "create:shaft[axis=y]" }
+
+[[step]]
+ticks = 1
+expect.blocks = [{ x = 2, y = 66, z = 0, state = "create:cogwheel_off[axis=y]" }]
+
+[[step]]
+as = "Alex"
+command = "create info"
+expect.feedback = "Network: 1 block(s) at 24 RPM — 1 motor."

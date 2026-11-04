@@ -1,0 +1,17 @@
+{
+	"type": "minecraft:crafting_shaped",
+	"category": "misc",
+	"pattern": [
+		"PPP",
+		"PLP",
+		"PPP"
+	],
+	"key": {
+		"P": "minecraft:oak_planks",
+		"L": "create:large_cogwheel"
+	},
+	"result": {
+		"id": "create:water_wheel",
+		"count": 1
+	}
+}

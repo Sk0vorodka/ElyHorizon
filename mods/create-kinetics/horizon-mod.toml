@@ -1,0 +1,12 @@
+# The simulation half of Create for RustCraft (API 0.3, docs/mods.md
+# "Server mods"): runs where the world simulates, reads and writes the
+# blocks of the create-content mod, and swaps cogwheels between their
+# spinning and idle models as networks start and stop.
+id = "create_kinetics"
+name = "Create Kinetics"
+version = "0.1.0"
+description = "The rotation simulation for Create for RustCraft: motors, water wheels and windmills drive shafts and cogwheels, large cogwheels halve the speed, millstones need it. /create info, /create speed <rpm>, /create stats."
+authors = ["Sk0vorodka"]
+api = "0.3"
+side = "server"
+capabilities = ["world", "players", "storage"]

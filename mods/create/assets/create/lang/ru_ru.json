@@ -1,0 +1,12 @@
+{
+	"block.create.cogwheel": "Шестерня",
+	"block.create.large_cogwheel": "Большая шестерня",
+	"block.create.shaft": "Вал",
+	"block.create.gearbox": "Коробка передач",
+	"block.create.creative_motor": "Творческий мотор",
+	"block.create.water_wheel": "Водяное колесо",
+	"block.create.windmill": "Ветряное колесо",
+	"block.create.millstone": "Мельница",
+	"itemGroup.create": "Create (RustCraft)",
+	"create.credit": "Block textures and models by the Create team (simibubi and contributors), CC BY-NC-SA 4.0"
+}
