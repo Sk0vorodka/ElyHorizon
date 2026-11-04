@@ -189,12 +189,81 @@ impl Creative {
     /// prepared before it fall back to `creative-tabs.json`'s item ids.
     pub fn load(root: &Path) -> Result<Self> {
         let path = root.join("creative-inventory.json");
-        if path.exists() {
+        let mut creative = if path.exists() {
             Self::from_json(&serde_json::from_slice(&fs::read(path)?)?)
         } else {
             Self::from_legacy(&serde_json::from_slice(&fs::read(
                 root.join("creative-tabs.json"),
             )?)?)
+        }?;
+        creative.append_content_tabs(root);
+        Ok(creative)
+    }
+
+    /// Content mods' items (docs/modpacks.md): the overlay's `items.json`
+    /// holds a row per registered item, and every namespace outside
+    /// minecraft's gets a top-row tab of its own (its name from the mod's
+    /// `itemGroup.<ns>` lang key) and joins the search tab. The creative
+    /// exporter is vanilla-only, so without this the mods' blocks could not
+    /// be picked at all.
+    fn append_content_tabs(&mut self, root: &Path) {
+        let Ok(text) = fs::read_to_string(root.join("items.json")) else {
+            return;
+        };
+        let Ok(serde_json::Value::Object(rows)) = serde_json::from_str(&text) else {
+            return;
+        };
+        let mut by_namespace: HashMap<&str, Vec<&str>> = HashMap::new();
+        for id in rows.keys() {
+            if let Some((namespace, path)) = id.split_once(':') {
+                if namespace != "minecraft" {
+                    by_namespace.entry(namespace).or_default().push(path);
+                }
+            }
+        }
+        let mut namespaces: Vec<&str> = by_namespace.keys().copied().collect();
+        namespaces.sort();
+        let column = self
+            .tabs
+            .iter()
+            .filter(|t| t.top)
+            .map(|t| t.column)
+            .max()
+            .unwrap_or(0);
+        for (i, namespace) in namespaces.into_iter().enumerate() {
+            if self.tabs.iter().any(|t| t.id == namespace) {
+                continue;
+            }
+            let mut paths = by_namespace[namespace].clone();
+            paths.sort();
+            let items: Vec<ItemStack> = paths
+                .iter()
+                .map(|p| ItemStack::new(&format!("{namespace}:{p}"), 1))
+                .collect();
+            let title = fs::read(root.join(format!("assets/{namespace}/lang/en_us.json")))
+                .ok()
+                .and_then(|b| serde_json::from_slice::<HashMap<String, String>>(&b).ok())
+                .and_then(|lang| lang.get(&format!("itemGroup.{namespace}")).cloned())
+                .unwrap_or_else(|| namespace.to_owned());
+            for stack in &items {
+                let (ns, path) = split_id(&java_lower(&stack.item));
+                self.search_index.push(SearchEntry {
+                    namespace: ns,
+                    path,
+                    ..Default::default()
+                });
+                self.search_items.push(stack.clone());
+            }
+            self.tabs.push(Tab {
+                id: namespace.to_owned(),
+                title,
+                icon: items[0].item.to_string(),
+                items,
+                top: true,
+                column: column + 1 + i as u32,
+                search: false,
+                inventory: false,
+            });
         }
     }
     pub fn from_json(raw: &Value) -> Result<Self> {
@@ -1005,5 +1074,45 @@ mod tests {
         c.search.key(KeyCode::ArrowRight, false, false);
         c.search.key(KeyCode::Backspace, false, false);
         assert_eq!(c.search.value, "world");
+    }
+
+    #[test]
+    fn content_mods_get_a_tab_and_the_search() {
+        let dir = std::env::temp_dir().join(format!("creative-content-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(dir.join("assets/create/lang")).unwrap();
+        std::fs::write(
+            dir.join("items.json"),
+            r#"{"minecraft:stone": {}, "create:cogwheel": {}, "create:shaft": {}}"#,
+        )
+        .unwrap();
+        std::fs::write(
+            dir.join("assets/create/lang/en_us.json"),
+            r#"{"itemGroup.create": "Create (RustCraft)"}"#,
+        )
+        .unwrap();
+        let mut c = Creative::from_legacy(&serde_json::json!([])).unwrap();
+        c.append_content_tabs(&dir);
+        let tab = c.tabs.iter().find(|t| t.id == "create").unwrap();
+        assert_eq!(tab.title, "Create (RustCraft)");
+        assert_eq!(tab.items.len(), 2, "minecraft:stone is no mod's item");
+        assert_eq!(tab.items[0].item, "create:cogwheel".into());
+        assert_eq!(c.search_items.len(), 2);
+        assert_eq!(c.search_index[0].namespace, "create");
+        assert_eq!(c.search_index[0].path, "cogwheel");
+        // A second load over the same root adds nothing.
+        c.append_content_tabs(&dir);
+        assert_eq!(c.tabs.len(), 1);
+        assert_eq!(c.search_items.len(), 2);
+        let _ = std::fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn no_content_mods_adds_no_tab() {
+        let mut c = Creative::from_legacy(&serde_json::json!([])).unwrap();
+        // No items.json: quietly nothing.
+        c.append_content_tabs(std::path::Path::new("a-folder-that-does-not-exist"));
+        assert!(c.tabs.is_empty());
+        assert!(c.search_items.is_empty());
     }
 }
