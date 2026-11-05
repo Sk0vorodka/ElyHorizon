@@ -11,7 +11,7 @@ version = "0.1.0"
 priority = 100
 
 [compatibility]
-horizon_revision = "296cfd9500212c73f29491a8306efde1540770b1"
+horizon_revision = "f1c1b8b53e2e3b7b169e5a9de61bc4175319d5f4"
 
 [[injection]]
 id = "create_tab"
