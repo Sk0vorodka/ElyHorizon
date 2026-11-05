@@ -24,8 +24,10 @@ pub const INSTANCE: &str = "native-mods";
 const NAME: &str = "Native mods";
 const PREFIX: &str = "native-";
 /// horizon-mixins, for bundles that don't name the revision they were tested with.
-const MIXINS_GIT: &str = "https://github.com/horizon-rust/horizon-mixins";
-pub const MIXINS_REV: &str = "0500ff24aa5933fca95a877ef41125353c4b4fe3";
+/// Our fork: upstream's staging only exchanges directories on Linux, which left
+/// native builds dead on Windows (docs/native-mods.md).
+const MIXINS_GIT: &str = "https://github.com/Sk0vorodka/horizon-mixins";
+pub const MIXINS_REV: &str = "fdb977398ff76b41b0960a52df51edbe0614fcf1";
 /// The profile and features of the release's own game (game-build.yml).
 const PROFILE: &str = "release";
 const FEATURES: &str = "horizon-client/mods";
@@ -37,6 +39,24 @@ pub fn is_native(version: &str) -> bool {
 
 fn root() -> PathBuf {
     backend::data_dir().join("native")
+}
+
+/// A canonicalized path without Windows' verbatim `\\?\` prefix (and `\\?\UNC\`
+/// as its UNC form): everything downstream — tempfile, file locks, child
+/// processes — takes the plain form, and the prefix's only gain, links, is
+/// exactly what the callers refuse anyway.
+fn plain(path: PathBuf) -> PathBuf {
+    #[cfg(windows)]
+    {
+        let text = path.to_string_lossy();
+        if let Some(rest) = text.strip_prefix(r"\\?\UNC\") {
+            return PathBuf::from(format!(r"\\{rest}"));
+        }
+        if let Some(rest) = text.strip_prefix(r"\\?\") {
+            return PathBuf::from(rest);
+        }
+    }
+    path
 }
 
 /// The build's log, kept until the next build.
@@ -456,7 +476,9 @@ pub fn build(base: &str, folder: &Path, progress: impl Fn(Step)) -> Result<Strin
         let source = source(&revision)?;
         progress(Step::Mixins);
         // horizon-mixins refuses an output path through a link (macOS's /tmp is one).
-        let real = root().canonicalize().map_err(|e| e.to_string())?;
+        // Windows' canonicalize is verbatim (\\?\C:\...), which staging's tempfile
+        // and locks do not take: hand it the plain path instead.
+        let real = plain(root().canonicalize().map_err(|e| e.to_string())?);
         let fresh = real.join("stage.new");
         let _ = fs::remove_dir_all(&fresh);
         let mut apply = Command::new(&tool);
