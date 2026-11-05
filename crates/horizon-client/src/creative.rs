@@ -4,7 +4,7 @@
 use crate::{Result, items::ItemStack, ui::EditBox};
 use serde_json::Value;
 use std::{
-    collections::HashMap,
+    collections::{BTreeSet, HashMap},
     fs,
     path::Path,
     sync::{Arc, Mutex},
@@ -223,14 +223,21 @@ impl Creative {
         }
         let mut namespaces: Vec<&str> = by_namespace.keys().copied().collect();
         namespaces.sort();
-        let column = self
+        // The first top column no vanilla tab draws in: 0..5 are the
+        // categories, 5 is the hotbar's (it draws no tab), 6 is the search's.
+        // Vanilla's tab sprites run to 7; past that the game draws a plain
+        // plate instead.
+        let taken: BTreeSet<u32> = self
             .tabs
             .iter()
             .filter(|t| t.top)
             .map(|t| t.column)
-            .max()
-            .unwrap_or(0);
-        for (i, namespace) in namespaces.into_iter().enumerate() {
+            .collect();
+        let mut next_column = 5u32;
+        while taken.contains(&next_column) {
+            next_column += 1;
+        }
+        for namespace in namespaces {
             if self.tabs.iter().any(|t| t.id == namespace) {
                 continue;
             }
@@ -260,10 +267,11 @@ impl Creative {
                 icon: items[0].item.to_string(),
                 items,
                 top: true,
-                column: column + 1 + i as u32,
+                column: next_column,
                 search: false,
                 inventory: false,
             });
+            next_column += 1;
         }
     }
     pub fn from_json(raw: &Value) -> Result<Self> {

@@ -112,6 +112,14 @@ def main() -> None:
     # ---- cogwheel: the crafted, always-spinning wheel; and cogwheel_off ---
     take_model("create:block/cogwheel")
     take_model("create:block/large_cogwheel")
+    # The spin model: the cogwheel's, on the animated 4-frame texture.
+    spin = json.loads(jar_text(JAR_ASSETS + "models/block/cogwheel.json"))
+    fix_model(spin)
+    spin["textures"]["1_2"] = "create:block/cogwheel_spin"
+    write(
+        "assets/create/models/block/cogwheel_spin.json",
+        json.dumps(spin, indent="\t"),
+    )
     write(
         "assets/create/blockstates/cogwheel.json",
         json.dumps(axis_blockstate("create:block/cogwheel_spin"), indent="\t"),

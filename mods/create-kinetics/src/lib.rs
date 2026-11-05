@@ -533,6 +533,53 @@ impl ServerMod for Kinetics {
                 self.nets.len(),
                 self.spinning
             ))),
+            Some("build") => {
+                // A demo line one row ahead of the player, along +x: motor,
+                // shaft, cogwheel, large cogwheel, shaft, millstone — all at
+                // one block above the feet level, so it hangs in sight.
+                let dim = &player.dimension;
+                let x0 = player.x.floor() as i32;
+                let y0 = player.y.floor() as i32 + 1;
+                let z0 = player.z.floor() as i32;
+                let line = [
+                    "create:creative_motor[axis=x]",
+                    "create:shaft[axis=x]",
+                    "create:cogwheel[axis=x]",
+                    "create:large_cogwheel[axis=x]",
+                    "create:shaft[axis=x]",
+                    "create:millstone",
+                ];
+                let blocks: Vec<BlockChange> = line
+                    .iter()
+                    .enumerate()
+                    .map(|(i, state)| BlockChange {
+                        x: x0 + 2 + i as i32,
+                        y: y0,
+                        z: z0,
+                        state: state.to_string(),
+                    })
+                    .collect();
+                world::set_blocks(dim, &blocks)
+                    .map(|_| {
+                        // The mod's own set_blocks fires no placed hook: the
+                        // line is tracked here by hand.
+                        for (i, state) in line.iter().enumerate() {
+                            if let Some((kind, _)) = Kind::of_state(state) {
+                                self.blocks.insert(
+                                    (dim.clone(), x0 + 2 + i as i32, y0, z0),
+                                    kind,
+                                );
+                            }
+                        }
+                        self.dirty = true;
+                        self.save();
+                        Ok(Some(format!(
+                            "Placed the demo line at ({x0}..{x}, {y0}, {z0}) — /create info stands on it: walk two blocks east.",
+                            x = x0 + 7
+                        )))
+                    })
+                    .map_err(|e| format!("set_blocks failed: {e}"))?
+            }
             _ => Err("Usage: /create info | /create speed <rpm> | /create stats".into()),
         }
     }

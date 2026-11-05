@@ -11088,7 +11088,15 @@ impl Game<'_> {
         for (i, t) in tabs.iter().enumerate() {
             if i != selected {
                 let (tx, ty) = Creative::tab_position(t);
-                batch.sprite(&self.gui.atlas, &tab_sprite(t, false), ox + tx, oy + ty);
+                let sprite = tab_sprite(t, false);
+                if self.gui.atlas.sprites.contains_key(&sprite) {
+                    batch.sprite(&self.gui.atlas, &sprite, ox + tx, oy + ty);
+                } else {
+                    // A mod tab past vanilla's sprite columns: a plain plate
+                    // in vanilla's colors; its item icon draws below anyway.
+                    batch.fill(&self.gui.atlas, ox + tx, oy + ty, 26.0, 32.0, rgba(31, 31, 31, 255));
+                    batch.fill(&self.gui.atlas, ox + tx + 1.0, oy + ty + 1.0, 24.0, 31.0, rgba(198, 198, 198, 255));
+                }
             }
         }
         let background = if tab.search {
@@ -11104,7 +11112,13 @@ impl Game<'_> {
             batch.rect_uv(ox, oy, Creative::WIDTH, Creative::HEIGHT, r, u32::MAX);
         }
         let (tx, ty) = Creative::tab_position(&tab);
-        batch.sprite(&self.gui.atlas, &tab_sprite(&tab, true), ox + tx, oy + ty);
+        let selected_sprite = tab_sprite(&tab, true);
+        if self.gui.atlas.sprites.contains_key(&selected_sprite) {
+            batch.sprite(&self.gui.atlas, &selected_sprite, ox + tx, oy + ty);
+        } else {
+            batch.fill(&self.gui.atlas, ox + tx, oy + ty, 26.0, 34.0, rgba(31, 31, 31, 255));
+            batch.fill(&self.gui.atlas, ox + tx + 1.0, oy + ty + 1.0, 24.0, 33.0, rgba(198, 198, 198, 255));
+        }
         for t in &tabs {
             let (tx, ty) = Creative::tab_position(t);
             let stack = ItemStack {
